@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Manrope } from "next/font/google";
 import "./globals.css";
 import { AgentationDev } from "@/components/agentation-dev";
 import { AppProviders } from "@/components/providers";
+import { boris } from "@/lib/fonts";
 import { cn } from "@/lib/utils";
 
-const inter = Inter({
+const manrope = Manrope({
   subsets: ["latin"],
   variable: "--font-sans",
   weight: ["400", "500", "600", "700"],
@@ -22,7 +23,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={cn("font-sans antialiased", inter.variable)}>
+    <html
+      lang="en"
+      className={cn(
+        "light font-sans antialiased",
+        manrope.variable,
+        boris.variable,
+      )}
+      style={{ colorScheme: "light" }}
+    >
       <body>
         <AppProviders>{children}</AppProviders>
         <AgentationDev />
