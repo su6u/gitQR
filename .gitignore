@@ -1,0 +1,43 @@
+# dependencies
+node_modules
+.pnpm-debug.log*
+
+# build outputs
+.next
+/dist
+build
+out
+*.tsbuildinfo
+
+# environment
+.env
+.env.local
+.env.*.local
+
+# ide
+.vscode
+.idea
+*.swp
+*.swo
+
+# os
+.DS_Store
+Thumbs.db
+
+# logs
+*.log
+logs
+
+# misc
+coverage
+
+# pnpm
+node_modules/
+.pnpm-store/
+
+# Next.js
+.next/
+out/
+next-env.d.ts
+
+.vercel
