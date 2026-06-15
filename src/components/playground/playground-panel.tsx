@@ -16,7 +16,7 @@ export function PlaygroundPanel() {
           GitQR PlayGround
         </h2>
       </header>
-      <div className="flex min-h-0 flex-1 flex-col gap-4">
+      <div className="mt-6 flex min-h-0 flex-1 flex-col gap-4">
         <div
           className="playground-panel-section shrink-0"
           style={{ animationDelay: "80ms" }}
