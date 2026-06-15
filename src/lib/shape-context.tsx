@@ -2,11 +2,11 @@
 
 import {
   createContext,
-  type ReactNode,
-  useCallback,
   useContext,
-  useEffect,
   useState,
+  useEffect,
+  useCallback,
+  type ReactNode,
 } from "react";
 
 type ShapeVariant = "pill" | "rounded";
@@ -72,8 +72,7 @@ function useShape(): ShapeClasses {
 
 function useShapeContext() {
   const ctx = useContext(ShapeContext);
-  if (!ctx)
-    throw new Error("useShapeContext must be used within a ShapeProvider");
+  if (!ctx) throw new Error("useShapeContext must be used within a ShapeProvider");
   return ctx;
 }
 
@@ -104,12 +103,7 @@ function ShapeProvider({
       if (e.key !== "r" && e.key !== "R") return;
       if (e.metaKey || e.ctrlKey || e.altKey) return;
       const tag = (e.target as HTMLElement)?.tagName;
-      if (
-        tag === "INPUT" ||
-        tag === "TEXTAREA" ||
-        (e.target as HTMLElement)?.isContentEditable
-      )
-        return;
+      if (tag === "INPUT" || tag === "TEXTAREA" || (e.target as HTMLElement)?.isContentEditable) return;
       e.preventDefault();
       transitionShape(() => {
         setShapeState((prev) => {
@@ -123,13 +117,11 @@ function ShapeProvider({
   }, []);
 
   return (
-    <ShapeContext.Provider
-      value={{ shape, setShape, classes: shapeMap[shape] }}
-    >
+    <ShapeContext.Provider value={{ shape, setShape, classes: shapeMap[shape] }}>
       {children}
     </ShapeContext.Provider>
   );
 }
 
-export type { ShapeClasses, ShapeVariant };
-export { ShapeProvider, shapeMap, useShape, useShapeContext };
+export { ShapeProvider, useShape, useShapeContext, shapeMap };
+export type { ShapeVariant, ShapeClasses };
