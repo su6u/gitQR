@@ -1,3 +1,5 @@
+import { Studio } from "@/components/studio/studio";
+
 export default function HomePage() {
-  return <main>git-qr</main>;
+  return <Studio />;
 }
