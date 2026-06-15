@@ -24,6 +24,7 @@
   --color-input: var(--input);
   --color-border: var(--border);
   --color-destructive: var(--destructive);
+  --color-destructive-light: var(--destructive-light);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
   --color-muted-foreground: var(--muted-foreground);
@@ -78,8 +79,14 @@
   --shadow-2: var(--shadow-2);
   --shadow-1: var(--shadow-1);
   --color-shadow-color: var(--shadow-color);
-  --color-studio-surface: #f4f4f4;
-  --color-studio-module: #e3e3e3;
+  --color-playground-surface: #ffffff;
+  --color-playground-module: #e3e3e3;
+  --color-hover: var(--hover);
+  --color-active: var(--active);
+  --color-playground-control: var(--playground-control);
+  --color-playground-track: var(--playground-track);
+  --color-brand: var(--brand);
+  --color-brand-hover: var(--brand-hover);
   @keyframes spinner-move {
     to {
       stroke-dashoffset: -100;
@@ -112,6 +119,7 @@
   --accent: oklch(0.97 0 0);
   --accent-foreground: oklch(0.205 0 0);
   --destructive: oklch(0.577 0.245 27.325);
+  --destructive-light: oklch(0.97 0.02 25);
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
   --ring: oklch(0.708 0 0);
@@ -129,6 +137,16 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+  /* Fluid interaction fills — neutral gray mixes, not pure black */
+  --hover: color-mix(in oklab, var(--foreground) 5%, transparent);
+  --active: color-mix(in oklab, var(--foreground) 8%, transparent);
+  --playground-control: oklch(0.955 0 0);
+  --playground-track: oklch(0.94 0 0);
+  --brand: #7bf1a8;
+  --brand-hover: #63e894;
+  /* Alpha / transparency checkerboard (color picker tiles + alpha slider) */
+  --checker-a: #ffffff;
+  --checker-b: #e0e0e0;
   --surface-1: #fafafa;
   --surface-2: #fcfcfc;
   --surface-3: #ffffff;
@@ -206,6 +224,8 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+  --checker-a: #3a3a3a;
+  --checker-b: #2a2a2a;
   --surface-1: #171717;
   --surface-2: #1e1e1e;
   --surface-3: #252525;
@@ -296,9 +316,9 @@
   }
 }
 
-/* one-time entrance for the studio panels; forwards only so elements stay visible
+/* one-time entrance for the playground panels; forwards only so elements stay visible
    if the animation is disabled or fails to start */
-@keyframes studio-enter {
+@keyframes playground-enter {
   from {
     opacity: 0;
     transform: translateY(8px);
@@ -309,14 +329,46 @@
   }
 }
 
-.studio-enter-item {
+.playground-enter-item {
   opacity: 1;
-  animation: studio-enter 460ms cubic-bezier(0.23, 1, 0.32, 1) forwards;
+  animation: playground-enter 460ms cubic-bezier(0.23, 1, 0.32, 1) forwards;
+}
+
+.playground-panel-section {
+  opacity: 0;
+  transform: translateY(6px);
+  animation: playground-enter 420ms cubic-bezier(0.23, 1, 0.32, 1) forwards;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .studio-enter-item {
+  .playground-enter-item {
     animation: none;
     opacity: 1;
   }
+
+  .playground-panel-section {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/*
+ * Playground panel: white shell with slightly gray control surfaces.
+ * Borders stay on --border (alpha neutrals). Depth via layered neutral shadows.
+ */
+[data-playground-panel] {
+  --accent: var(--playground-track);
+  --secondary: var(--playground-control);
+  --muted: var(--playground-control);
+  --hover: color-mix(in oklab, var(--foreground) 7%, transparent);
+  --active: color-mix(in oklab, var(--foreground) 11%, transparent);
+  --slider-step-dot: color-mix(in oklab, var(--foreground) 34%, transparent);
+  --slider-step-dot-opacity: 1;
+}
+
+[data-playground-panel]
+  label.cursor-text:not(:has([aria-invalid="true"]))
+  > .ring-1.ring-transparent {
+  background-color: var(--playground-control);
 }
