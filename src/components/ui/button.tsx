@@ -104,6 +104,8 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       ? activeBgVariants[variant ?? "primary"]
       : bgVariants[variant ?? "primary"];
 
+    const isDisabled = Boolean(disabled || loading);
+
     return (
       <Comp
         ref={ref}
@@ -117,7 +119,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
           shape.button,
           className,
         )}
-        disabled={disabled || loading}
+        disabled={isDisabled}
         style={style}
         {...props}
       >
