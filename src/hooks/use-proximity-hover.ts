@@ -1,13 +1,13 @@
 "use client";
 
 import {
+  useRef,
+  useState,
+  useCallback,
+  useEffect,
   type Dispatch,
   type RefObject,
   type SetStateAction,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
 } from "react";
 
 export interface ItemRect {
@@ -37,7 +37,7 @@ interface UseProximityHoverReturn {
 
 export function useProximityHover<T extends HTMLElement>(
   containerRef: RefObject<T | null>,
-  options: UseProximityHoverOptions = {},
+  options: UseProximityHoverOptions = {}
 ): UseProximityHoverReturn {
   const { axis = "y" } = options;
   const itemsRef = useRef(new Map<number, HTMLElement>());
@@ -88,7 +88,7 @@ export function useProximityHover<T extends HTMLElement>(
         measureItems();
       });
     },
-    [measureItems],
+    [measureItems]
   );
 
   const handleMouseMove = useCallback(
@@ -114,20 +114,15 @@ export function useProximityHover<T extends HTMLElement>(
 
         const rects = itemRectsRef.current;
         // Convert content-relative rects to viewport coords using live scroll
-        const scrollOffset =
-          axis === "x" ? container.scrollLeft : container.scrollTop;
-        const borderOffset =
-          axis === "x" ? container.clientLeft : container.clientTop;
-        const containerEdge =
-          axis === "x" ? containerRect.left : containerRect.top;
+        const scrollOffset = axis === "x" ? container.scrollLeft : container.scrollTop;
+        const borderOffset = axis === "x" ? container.clientLeft : container.clientTop;
+        const containerEdge = axis === "x" ? containerRect.left : containerRect.top;
         // Item rects are layout values (offset*); the container's bounding rect
         // reflects any cumulative ancestor transform: scale. Compute the scale
         // factor so we can map layout coords into the same visual viewport
         // space the mouse cursor lives in.
-        const layoutSize =
-          axis === "x" ? container.offsetWidth : container.offsetHeight;
-        const visualSize =
-          axis === "x" ? containerRect.width : containerRect.height;
+        const layoutSize = axis === "x" ? container.offsetWidth : container.offsetHeight;
+        const visualSize = axis === "x" ? containerRect.width : containerRect.height;
         const scale = layoutSize > 0 ? visualSize / layoutSize : 1;
 
         for (let index = 0; index < rects.length; index++) {
@@ -135,8 +130,7 @@ export function useProximityHover<T extends HTMLElement>(
           if (!r) continue;
 
           const contentPos = axis === "x" ? r.left : r.top;
-          const itemStart =
-            containerEdge + (borderOffset + contentPos - scrollOffset) * scale;
+          const itemStart = containerEdge + (borderOffset + contentPos - scrollOffset) * scale;
           const itemSize = (axis === "x" ? r.width : r.height) * scale;
           const itemEnd = itemStart + itemSize;
 
@@ -156,7 +150,7 @@ export function useProximityHover<T extends HTMLElement>(
         setActiveIndex(containingIndex ?? closestIndex);
       });
     },
-    [axis, containerRef],
+    [axis, containerRef]
   );
 
   const handleMouseEnter = useCallback(() => {
@@ -205,7 +199,7 @@ export function useProximityHover<T extends HTMLElement>(
 export function useRegisterProximityItem(
   registerItem: (index: number, element: HTMLElement | null) => void,
   index: number,
-  ref: RefObject<HTMLElement | null>,
+  ref: RefObject<HTMLElement | null>
 ) {
   useEffect(() => {
     registerItem(index, ref.current);
