@@ -113,7 +113,7 @@ export function PlaygroundCustomization() {
   const [backgroundColor, setBackgroundColor] = useState(BACKGROUND_DEFAULT);
   const [roundness, setRoundness] = useState(4);
   const [gap, setGap] = useState(3);
-  const [profileImage, setProfileImage] = useState(false);
+  const [profileImage, setProfileImage] = useState(true);
   const [imageSize, setImageSize] = useState(36);
   const [contributionLook, setContributionLook] = useState("classic");
   const [exportSize, setExportSize] = useState("1024");
