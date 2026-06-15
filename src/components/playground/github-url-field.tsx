@@ -91,11 +91,11 @@ export function GithubUrlField({
             type="button"
             variant="primary"
             size="sm"
-            className="h-7 shrink-0 px-3 text-white [&_span]:bg-brand [&_span]:group-hover:bg-brand-hover [&_span]:group-active:bg-brand-hover"
+            className="h-7 shrink-0 px-3 text-[12px] text-foreground [&_span]:bg-brand [&_span]:group-hover:bg-brand-hover [&_span]:group-active:bg-brand-hover"
             disabled={!value.trim()}
             onClick={handleSubmit}
           >
-            Enter
+            enter
           </Button>
         }
       />
