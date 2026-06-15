@@ -1,9 +1,18 @@
 import { Pill } from "./pill";
 import { PlaygroundNavbar } from "./playground-navbar";
 import { PlaygroundPanel } from "./playground-panel";
+import { PlaygroundProvider } from "./playground-provider";
 import { QrBoard } from "./qr-board";
 
 export function Playground() {
+  return (
+    <PlaygroundProvider>
+      <PlaygroundMain />
+    </PlaygroundProvider>
+  );
+}
+
+function PlaygroundMain() {
   return (
     <main className="relative h-svh w-full overflow-hidden bg-white">
       <QrBoard

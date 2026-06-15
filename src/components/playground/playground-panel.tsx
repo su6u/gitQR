@@ -1,9 +1,14 @@
+"use client";
+
 import { boris } from "@/lib/fonts";
 import { cn } from "@/lib/utils";
 import { GithubUrlField } from "./github-url-field";
 import { PlaygroundCustomization } from "./playground-customization";
+import { usePlayground } from "./playground-provider";
 
 export function PlaygroundPanel() {
+  const { generate, loading, error } = usePlayground();
+
   return (
     <div className="flex h-full min-h-0 flex-col px-5 pt-10 pb-4">
       <header className="playground-panel-section shrink-0 pb-4 text-center">
@@ -21,7 +26,12 @@ export function PlaygroundPanel() {
           className="playground-panel-section shrink-0"
           style={{ animationDelay: "80ms" }}
         >
-          <GithubUrlField />
+          <GithubUrlField onSubmit={generate} loading={loading} />
+          {error ? (
+            <p className="mt-2 text-[12px] text-destructive" role="alert">
+              {error}
+            </p>
+          ) : null}
         </div>
         <div
           className="playground-panel-section flex min-h-0 flex-1 flex-col pt-2"
