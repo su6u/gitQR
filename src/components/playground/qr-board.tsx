@@ -2,13 +2,16 @@
 
 import type { CSSProperties } from "react";
 import { useLayoutEffect, useRef, useState } from "react";
+import { QR_MODULE_COUNT } from "@/lib/qr";
 import { cn } from "@/lib/utils";
+import { usePlayground } from "./playground-provider";
 
 const GAP_PX = 4;
 const MIN_MODULE_PX = 16;
 const MAGNET_RADIUS = 5.5;
 const MAX_PUSH_RATIO = 0.55;
 const MAGNET_SPRING = 0.11;
+const DEFAULT_FILL = "#e3e3e3";
 
 function moduleCount(span: number) {
   return Math.max(1, Math.floor((span + GAP_PX) / (MIN_MODULE_PX + GAP_PX)));
@@ -19,6 +22,34 @@ function resetCell(cell: HTMLElement) {
   cell.style.setProperty("--qr-y", "0px");
 }
 
+/** Right panel is ~28% of the overlay; center QR in the remaining left canvas. */
+const PANEL_WIDTH_RATIO = 0.28;
+
+function centeredQrModule(
+  displayRow: number,
+  displayCol: number,
+  displayRows: number,
+  displayCols: number,
+) {
+  const size = QR_MODULE_COUNT;
+  const leftCenterCol = (displayCols * (1 - PANEL_WIDTH_RATIO)) / 2;
+  const startRow = Math.floor((displayRows - size) / 2);
+  const startCol = Math.round(leftCenterCol - size / 2);
+  const localRow = displayRow - startRow;
+  const localCol = displayCol - startCol;
+
+  if (
+    localRow < 0 ||
+    localCol < 0 ||
+    localRow >= size ||
+    localCol >= size
+  ) {
+    return null;
+  }
+
+  return localRow * size + localCol;
+}
+
 export function QrBoard({
   className,
   style,
@@ -26,6 +57,7 @@ export function QrBoard({
   className?: string;
   style?: CSSProperties;
 }) {
+  const { grid: styledGrid, loading } = usePlayground();
   const containerRef = useRef<HTMLDivElement>(null);
   const gridRef = useRef<HTMLDivElement>(null);
   const cellsRef = useRef<(HTMLSpanElement | null)[]>([]);
@@ -33,7 +65,9 @@ export function QrBoard({
   const hoverEnabledRef = useRef(false);
   const reducedMotionRef = useRef(false);
   const gridDimsRef = useRef({ cols: 0, rows: 0 });
-  const [grid, setGrid] = useState({ cols: 0, rows: 0 });
+  const [layout, setLayout] = useState({ cols: 0, rows: 0 });
+
+  const hasGeneratedGrid = Boolean(styledGrid?.modules.length);
 
   useLayoutEffect(() => {
     const el = containerRef.current;
@@ -41,7 +75,7 @@ export function QrBoard({
 
     const update = () => {
       const { width, height } = el.getBoundingClientRect();
-      setGrid({
+      setLayout({
         cols: moduleCount(width),
         rows: moduleCount(height),
       });
@@ -53,20 +87,20 @@ export function QrBoard({
     return () => observer.disconnect();
   }, []);
 
-  const moduleCountTotal = grid.cols * grid.rows;
+  const moduleCountTotal = layout.cols * layout.rows;
 
   useLayoutEffect(() => {
-    gridDimsRef.current = grid;
-  }, [grid]);
+    gridDimsRef.current = layout;
+  }, [layout]);
 
   useLayoutEffect(() => {
     cellsRef.current.length = moduleCountTotal;
     lastAffectedRef.current.clear();
-  }, [moduleCountTotal]);
+  }, [moduleCountTotal, styledGrid]);
 
   useLayoutEffect(() => {
     const gridEl = gridRef.current;
-    if (!gridEl || grid.cols === 0 || grid.rows === 0) return;
+    if (!gridEl || layout.cols === 0 || layout.rows === 0) return;
 
     const finePointerQuery = window.matchMedia(
       "(hover: hover) and (pointer: fine)",
@@ -136,7 +170,6 @@ export function QrBoard({
           const t = 1 - dist / radiusPx;
           const strength = t * t;
           const push = strength * maxPush;
-          // Repel: move away from cursor (opposite of pull direction)
           const tx = -(dx / dist) * push;
           const ty = -(dy / dist) * push;
 
@@ -190,7 +223,6 @@ export function QrBoard({
         return;
       }
 
-      // Enable CSS transition only for snap-back (transitions-dev avatar pattern)
       delete gridEl.dataset.magnet;
       gridEl.dataset.magnet = "settling";
 
@@ -256,34 +288,54 @@ export function QrBoard({
       gridEl.removeEventListener("mousemove", onMouseMove);
       gridEl.removeEventListener("mouseleave", onMouseLeave);
     };
-  }, [grid.cols, grid.rows]);
+  }, [layout.cols, layout.rows]);
 
   return (
     <div
       ref={containerRef}
-      className={cn("min-h-0 h-full w-full", className)}
+      className={cn("min-h-0 h-full w-full", className, loading && "opacity-60")}
       style={style}
     >
-      {grid.cols > 0 && grid.rows > 0 && (
+      {layout.cols > 0 && layout.rows > 0 && (
         <div
           ref={gridRef}
+          role={hasGeneratedGrid ? "img" : undefined}
           className="qr-grid grid h-full w-full"
           style={{
             gap: `${GAP_PX}px`,
-            gridTemplateColumns: `repeat(${grid.cols}, minmax(0, 1fr))`,
-            gridTemplateRows: `repeat(${grid.rows}, minmax(0, 1fr))`,
+            gridTemplateColumns: `repeat(${layout.cols}, minmax(0, 1fr))`,
+            gridTemplateRows: `repeat(${layout.rows}, minmax(0, 1fr))`,
           }}
+          aria-busy={loading}
+          aria-label={hasGeneratedGrid ? "Generated GitQR code" : undefined}
         >
-          {Array.from({ length: moduleCountTotal }, (_, i) => (
-            <span
-              // biome-ignore lint/suspicious/noArrayIndexKey: playground grid, position is stable per resize
-              key={i}
-              ref={(el) => {
-                cellsRef.current[i] = el;
-              }}
-              className="qr-cell block min-h-0 min-w-0 rounded-[5px] bg-[#e3e3e3]"
-            />
-          ))}
+          {Array.from({ length: moduleCountTotal }, (_, i) => {
+            const row = Math.floor(i / layout.cols);
+            const col = i % layout.cols;
+            const qrIndex = hasGeneratedGrid
+              ? centeredQrModule(row, col, layout.rows, layout.cols)
+              : null;
+            const mod =
+              qrIndex !== null ? styledGrid?.modules[qrIndex] : undefined;
+            const fill = mod?.fill ?? DEFAULT_FILL;
+
+            return (
+              <span
+                // biome-ignore lint/suspicious/noArrayIndexKey: playground grid, position is stable per resize
+                key={i}
+                ref={(el) => {
+                  cellsRef.current[i] = el;
+                }}
+                className="qr-cell block min-h-0 min-w-0 rounded-[5px]"
+                style={{ backgroundColor: fill }}
+                title={
+                  mod
+                    ? `${mod.contribution.date || "no date"} · level ${mod.contribution.level}${mod.isDark ? " · QR dark" : ""}`
+                    : undefined
+                }
+              />
+            );
+          })}
         </div>
       )}
     </div>
