@@ -4,6 +4,7 @@ import {
   forwardRef,
   useRef,
   useEffect,
+  useLayoutEffect,
   useState,
   useCallback,
   createContext,
@@ -34,6 +35,7 @@ interface SelectContextValue {
   disabled: boolean;
   triggerRef: React.RefObject<HTMLButtonElement | null>;
   labelMap: React.MutableRefObject<Map<string, string>>;
+  registerLabel: (value: string, label: string) => void;
 }
 
 const SelectContext = createContext<SelectContextValue | null>(null);
@@ -79,9 +81,16 @@ function Select({
 }: SelectProps) {
   const [internalValue, setInternalValue] = useState(defaultValue ?? "");
   const [open, setOpen] = useState(false);
+  const [, setLabelEpoch] = useState(0);
   const currentValue = value !== undefined ? value : internalValue;
   const triggerRef = useRef<HTMLButtonElement>(null);
   const labelMap = useRef(new Map<string, string>());
+
+  const registerLabel = useCallback((itemValue: string, label: string) => {
+    if (labelMap.current.get(itemValue) === label) return;
+    labelMap.current.set(itemValue, label);
+    setLabelEpoch((epoch) => epoch + 1);
+  }, []);
 
   const onChange = useCallback(
     (v: string) => {
@@ -103,6 +112,7 @@ function Select({
         disabled,
         triggerRef,
         labelMap,
+        registerLabel,
       }}
     >
       {children}
@@ -610,12 +620,12 @@ const SelectItem = forwardRef<HTMLDivElement, SelectItemProps>(
       hasMounted.current = true;
     }, []);
 
-    // Register label with root context
-    useEffect(() => {
+    // Register label after items mount so the trigger can show item text, not raw value.
+    useLayoutEffect(() => {
       if (typeof children === "string") {
-        selectCtx.labelMap.current.set(value, children);
+        selectCtx.registerLabel(value, children);
       }
-    }, [value, children, selectCtx.labelMap]);
+    }, [value, children, selectCtx.registerLabel]);
 
     // Register with proximity hover (only when content context exists = open)
     useEffect(() => {
