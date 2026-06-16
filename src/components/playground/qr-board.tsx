@@ -1,53 +1,24 @@
 "use client";
 
-import type { CSSProperties } from "react";
+import type { CSSProperties, RefObject } from "react";
 import { useLayoutEffect, useRef, useState } from "react";
-import { QR_MODULE_COUNT } from "@/lib/qr";
+import {
+  moduleCountForSpan,
+  QR_BOARD_GAP_PX,
+  qrModuleIndex,
+  qrRegionRect,
+} from "@/lib/qr-layout";
 import { cn } from "@/lib/utils";
 import { usePlayground } from "./playground-provider";
 
-const GAP_PX = 4;
-const MIN_MODULE_PX = 16;
 const MAGNET_RADIUS = 5.5;
 const MAX_PUSH_RATIO = 0.55;
 const MAGNET_SPRING = 0.11;
 const DEFAULT_FILL = "#e3e3e3";
 
-function moduleCount(span: number) {
-  return Math.max(1, Math.floor((span + GAP_PX) / (MIN_MODULE_PX + GAP_PX)));
-}
-
 function resetCell(cell: HTMLElement) {
   cell.style.setProperty("--qr-x", "0px");
   cell.style.setProperty("--qr-y", "0px");
-}
-
-/** Right panel is ~28% of the overlay; center QR in the remaining left canvas. */
-const PANEL_WIDTH_RATIO = 0.28;
-
-function centeredQrModule(
-  displayRow: number,
-  displayCol: number,
-  displayRows: number,
-  displayCols: number,
-) {
-  const size = QR_MODULE_COUNT;
-  const leftCenterCol = (displayCols * (1 - PANEL_WIDTH_RATIO)) / 2;
-  const startRow = Math.floor((displayRows - size) / 2);
-  const startCol = Math.round(leftCenterCol - size / 2);
-  const localRow = displayRow - startRow;
-  const localCol = displayCol - startCol;
-
-  if (
-    localRow < 0 ||
-    localCol < 0 ||
-    localRow >= size ||
-    localCol >= size
-  ) {
-    return null;
-  }
-
-  return localRow * size + localCol;
 }
 
 export function QrBoard({
@@ -57,7 +28,7 @@ export function QrBoard({
   className?: string;
   style?: CSSProperties;
 }) {
-  const { grid: styledGrid, loading } = usePlayground();
+  const { grid: styledGrid, loading, scanMode } = usePlayground();
   const containerRef = useRef<HTMLDivElement>(null);
   const gridRef = useRef<HTMLDivElement>(null);
   const cellsRef = useRef<(HTMLSpanElement | null)[]>([]);
@@ -76,8 +47,8 @@ export function QrBoard({
     const update = () => {
       const { width, height } = el.getBoundingClientRect();
       setLayout({
-        cols: moduleCount(width),
-        rows: moduleCount(height),
+        cols: moduleCountForSpan(width),
+        rows: moduleCountForSpan(height),
       });
     };
 
@@ -93,6 +64,8 @@ export function QrBoard({
     gridDimsRef.current = layout;
   }, [layout]);
 
+  // Reset magnet offsets when the QR content changes without a resize.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: styledGrid triggers cell reset on regenerate
   useLayoutEffect(() => {
     cellsRef.current.length = moduleCountTotal;
     lastAffectedRef.current.clear();
@@ -100,7 +73,7 @@ export function QrBoard({
 
   useLayoutEffect(() => {
     const gridEl = gridRef.current;
-    if (!gridEl || layout.cols === 0 || layout.rows === 0) return;
+    if (!gridEl || layout.cols === 0 || layout.rows === 0 || scanMode) return;
 
     const finePointerQuery = window.matchMedia(
       "(hover: hover) and (pointer: fine)",
@@ -134,23 +107,19 @@ export function QrBoard({
 
     const applyMagneticField = (mx: number, my: number) => {
       const { cols, rows } = gridDimsRef.current;
-      const cellWidth = (gridEl.offsetWidth - (cols - 1) * GAP_PX) / cols;
-      const cellHeight = (gridEl.offsetHeight - (rows - 1) * GAP_PX) / rows;
-      const spanX = cellWidth + GAP_PX;
-      const spanY = cellHeight + GAP_PX;
+      const cellWidth =
+        (gridEl.offsetWidth - (cols - 1) * QR_BOARD_GAP_PX) / cols;
+      const cellHeight =
+        (gridEl.offsetHeight - (rows - 1) * QR_BOARD_GAP_PX) / rows;
+      const spanX = cellWidth + QR_BOARD_GAP_PX;
+      const spanY = cellHeight + QR_BOARD_GAP_PX;
       const avgCell = (cellWidth + cellHeight) / 2;
       const radiusPx = MAGNET_RADIUS * avgCell;
       const maxPush = avgCell * MAX_PUSH_RATIO;
       const radiusCells = Math.ceil(MAGNET_RADIUS);
 
-      const centerCol = Math.min(
-        cols - 1,
-        Math.max(0, Math.floor(mx / spanX)),
-      );
-      const centerRow = Math.min(
-        rows - 1,
-        Math.max(0, Math.floor(my / spanY)),
-      );
+      const centerCol = Math.min(cols - 1, Math.max(0, Math.floor(mx / spanX)));
+      const centerRow = Math.min(rows - 1, Math.max(0, Math.floor(my / spanY)));
 
       const nextAffected = new Set<number>();
 
@@ -288,32 +257,40 @@ export function QrBoard({
       gridEl.removeEventListener("mousemove", onMouseMove);
       gridEl.removeEventListener("mouseleave", onMouseLeave);
     };
-  }, [layout.cols, layout.rows]);
+  }, [layout.cols, layout.rows, scanMode]);
 
   return (
     <div
       ref={containerRef}
-      className={cn("min-h-0 h-full w-full", className, loading && "opacity-60")}
+      className={cn(
+        "min-h-0 h-full w-full",
+        className,
+        loading && "opacity-60",
+      )}
       style={style}
     >
       {layout.cols > 0 && layout.rows > 0 && (
         <div
           ref={gridRef}
-          role={hasGeneratedGrid ? "img" : undefined}
           className="qr-grid grid h-full w-full"
           style={{
-            gap: `${GAP_PX}px`,
+            gap: `${QR_BOARD_GAP_PX}px`,
             gridTemplateColumns: `repeat(${layout.cols}, minmax(0, 1fr))`,
             gridTemplateRows: `repeat(${layout.rows}, minmax(0, 1fr))`,
           }}
+          {...(hasGeneratedGrid
+            ? {
+                role: "img" as const,
+                "aria-label": "Generated GitQR code",
+              }
+            : {})}
           aria-busy={loading}
-          aria-label={hasGeneratedGrid ? "Generated GitQR code" : undefined}
         >
           {Array.from({ length: moduleCountTotal }, (_, i) => {
             const row = Math.floor(i / layout.cols);
             const col = i % layout.cols;
             const qrIndex = hasGeneratedGrid
-              ? centeredQrModule(row, col, layout.rows, layout.cols)
+              ? qrModuleIndex(row, col, layout.rows, layout.cols)
               : null;
             const mod =
               qrIndex !== null ? styledGrid?.modules[qrIndex] : undefined;
@@ -340,4 +317,40 @@ export function QrBoard({
       )}
     </div>
   );
+}
+
+export function useQrBoardLayout(containerRef: RefObject<HTMLElement | null>) {
+  const [layout, setLayout] = useState({
+    cols: 0,
+    rows: 0,
+    width: 0,
+    height: 0,
+  });
+
+  useLayoutEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    const update = () => {
+      const { width, height } = el.getBoundingClientRect();
+      setLayout({
+        width,
+        height,
+        cols: moduleCountForSpan(width),
+        rows: moduleCountForSpan(height),
+      });
+    };
+
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [containerRef]);
+
+  const region =
+    layout.width > 0 && layout.height > 0
+      ? qrRegionRect(layout.width, layout.height, layout.rows, layout.cols)
+      : null;
+
+  return { layout, region };
 }

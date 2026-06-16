@@ -87,6 +87,8 @@
   --color-playground-track: var(--playground-track);
   --color-brand: var(--brand);
   --color-brand-hover: var(--brand-hover);
+  --color-scan-accent: var(--scan-accent);
+  --color-scan-accent-hover: var(--scan-accent-hover);
   @keyframes spinner-move {
     to {
       stroke-dashoffset: -100;
@@ -144,6 +146,8 @@
   --playground-track: oklch(0.94 0 0);
   --brand: #7bf1a8;
   --brand-hover: #63e894;
+  --scan-accent: #8ec1ff;
+  --scan-accent-hover: #6aaff5;
   /* Alpha / transparency checkerboard (color picker tiles + alpha slider) */
   --checker-a: #ffffff;
   --checker-b: #e0e0e0;
@@ -398,5 +402,63 @@
     .qr-grid[data-magnet="settling"] .qr-cell {
       transition: none;
     }
+  }
+
+  .qr-scan-overlay {
+    touch-action: none;
+  }
+
+  .qr-scan-target::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    border-radius: inherit;
+    background:
+      radial-gradient(
+        ellipse 90% 90% at 50% 50%,
+        color-mix(in oklab, var(--scan-accent) 5%, transparent) 0%,
+        color-mix(in oklab, var(--scan-accent) 10%, black 6%) 100%
+      );
+    box-shadow:
+      inset 0 0 28px color-mix(in oklab, var(--scan-accent) 14%, transparent),
+      inset 0 0 0 1px color-mix(in oklab, var(--scan-accent) 12%, transparent);
+    pointer-events: none;
+  }
+
+  .qr-scan-crosshair {
+    z-index: 1;
+  }
+
+  .qr-scan-crosshair::before,
+  .qr-scan-crosshair::after {
+    content: "";
+    position: absolute;
+    background: color-mix(in oklab, var(--scan-accent) 55%, transparent);
+    border-radius: 1px;
+    pointer-events: none;
+  }
+
+  .qr-scan-crosshair::before {
+    left: 50%;
+    top: 12%;
+    width: 1px;
+    height: 76%;
+    transform: translateX(-50%);
+  }
+
+  .qr-scan-crosshair::after {
+    top: 50%;
+    left: 12%;
+    height: 1px;
+    width: 76%;
+    transform: translateY(-50%);
+  }
+
+  .qr-scan-target:hover .qr-scan-crosshair::before,
+  .qr-scan-target:hover .qr-scan-crosshair::after,
+  .qr-scan-target:focus-visible .qr-scan-crosshair::before,
+  .qr-scan-target:focus-visible .qr-scan-crosshair::after {
+    background: color-mix(in oklab, var(--scan-accent) 80%, transparent);
   }
 }
