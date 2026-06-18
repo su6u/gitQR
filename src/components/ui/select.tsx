@@ -18,6 +18,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 import type { IconComponent } from "@/lib/icon-context";
 import { cn } from "@/lib/utils";
 import { spring } from "@/lib/springs";
+import { popoverEnter } from "@/lib/popover-enter";
 import { useProximityHover } from "@/hooks/use-proximity-hover";
 import { useShape } from "@/lib/shape-context";
 import { useScrollEdges, ScrollEdgeCue } from "@/lib/scroll-fade";
@@ -138,7 +139,7 @@ const triggerVariants = cva(
   [
     "group inline-flex items-center justify-between gap-2 outline-none cursor-pointer",
     "text-[13px] h-9 px-3 min-w-[160px]",
-    "transition-all duration-80",
+    "transition-[background-color,box-shadow,color] duration-80",
     "disabled:opacity-50 disabled:pointer-events-none",
     "focus-visible:ring-1 focus-visible:ring-brand",
   ],
@@ -220,7 +221,7 @@ const SelectTrigger = forwardRef<HTMLButtonElement, SelectTriggerProps>(
             <Icon
               size={16}
               strokeWidth={1.5}
-              className="shrink-0 text-muted-foreground transition-[color,stroke-width] duration-80 group-hover:text-foreground group-hover:stroke-[2]"
+              className="shrink-0 text-muted-foreground transition-[color,stroke-width] duration-80 [@media(hover:hover)_and_(pointer:fine)]:group-hover:text-foreground [@media(hover:hover)_and_(pointer:fine)]:group-hover:stroke-[2]"
             />
           )}
           <span className="min-w-0 flex-1 text-left truncate">
@@ -442,8 +443,8 @@ const SelectContent = forwardRef<HTMLDivElement, SelectContentProps>(
           }}
         >
           <motion.div
-            initial={{ opacity: 0, y: -4, scaleY: 0.96 }}
-            animate={{ opacity: 1, y: 0, scaleY: 1 }}
+            initial={popoverEnter.hidden}
+            animate={popoverEnter.visible}
             transition={spring.fast}
             style={{ transformOrigin: "top center" }}
           >
@@ -713,7 +714,7 @@ const SelectItem = forwardRef<HTMLDivElement, SelectItemProps>(
                 }}
                 exit={{
                   pathLength: 0,
-                  transition: { duration: 0.04, ease: "easeIn" },
+                  transition: { duration: 0.04, ease: "easeOut" },
                 }}
               />
             </motion.svg>
