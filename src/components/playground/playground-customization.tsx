@@ -1,5 +1,6 @@
 "use client";
 
+import type { CSSProperties } from "react";
 import { type ReactNode, useCallback, useState } from "react";
 import { toast } from "sonner";
 import { DownloadIcon } from "@/components/icons/download-icon";
@@ -31,6 +32,10 @@ const BACKGROUND_PRESETS = [
   { color: "#E8F5E9", label: "Mint" },
 ] as const;
 
+export const PLAYGROUND_ACCENT = "#FA70B3";
+export const PLAYGROUND_ACCENT_HOVER = "#FA70B3";
+export const PLAYGROUND_ACCENT_ACTIVE = "#FA70B3";
+
 const MODULE_DEFAULT = "#3D3D3D";
 const BACKGROUND_DEFAULT = "#FFFFFF";
 
@@ -41,6 +46,7 @@ const SELECT_TRIGGER = `h-8 min-h-8 w-full min-w-0 px-3 text-[13px] ${PLAYGROUND
 const SLIDER_TRACK_STYLE = {
   backgroundColor: "var(--playground-track)",
 } as const;
+const SLIDER_THUMB_COLOR = "#000";
 const SLIDER_THUMB_BORDER = "rgba(0, 0, 0, 0.08)";
 
 function PlaygroundSection({
@@ -111,6 +117,7 @@ function PlaygroundSlider({
         disabled={disabled}
         className="min-w-0"
         trackStyle={SLIDER_TRACK_STYLE}
+        thumbColor={SLIDER_THUMB_COLOR}
         thumbBorderColor={SLIDER_THUMB_BORDER}
       />
     </PlaygroundRow>
@@ -177,6 +184,7 @@ export function PlaygroundCustomization() {
                 selected={
                   backgroundColor.toLowerCase() === preset.color.toLowerCase()
                 }
+                selectedRingColor={PLAYGROUND_ACCENT}
                 aria-label={preset.label}
                 onClick={() => setBackgroundColor(preset.color)}
               />
@@ -213,12 +221,22 @@ export function PlaygroundCustomization() {
       </PlaygroundSection>
 
       <PlaygroundSection title="GitHub">
-        <Switch
-          label="Profile image"
-          checked={profileImage}
-          onToggle={() => setProfileImage((on) => !on)}
-          className="gap-2.5 px-0 py-1 [&_span]:text-[13px]"
-        />
+        <div
+          style={
+            {
+              "--brand": PLAYGROUND_ACCENT,
+              "--brand-hover": PLAYGROUND_ACCENT_HOVER,
+            } as CSSProperties
+          }
+        >
+          <Switch
+            label="Profile image"
+            checked={profileImage}
+            onToggle={() => setProfileImage((on) => !on)}
+            thumbClassName="bg-black"
+            className="gap-2.5 px-0 py-1 [&_span]:text-[13px] [&_[role=switch]]:focus-visible:ring-[#FA70B3]/40"
+          />
+        </div>
 
         <PlaygroundSlider
           label="Image size"
@@ -276,20 +294,22 @@ export function PlaygroundCustomization() {
           </p>
         )}
 
-        <Button
-          type="button"
-          variant="ghost"
-          size="md"
-          className="mt-5 h-9 w-full rounded-full font-bold text-foreground focus-visible:ring-[#63E895]/40 [&_span]:rounded-full [&_span]:bg-[#63E895] [&_span]:transition-[background-color,transform] [&_span]:duration-80 [&_span]:group-hover:bg-[#52df88] [&_span]:group-active:bg-[#45d67c]"
-          style={{ fontVariationSettings: fontWeights.bold }}
-          leadingIcon={DownloadIcon as IconComponent}
-          disabled={downloading || !grid}
-          onClick={() => {
-            void handleDownload();
-          }}
-        >
-          {downloading ? "Downloading…" : "Download"}
-        </Button>
+        <span className="playground-download-pill mt-5">
+          <Button
+            type="button"
+            variant="ghost"
+            size="md"
+            className="h-9 w-full rounded-full font-bold text-foreground hover:text-foreground focus-visible:ring-[#FA70B3]/40"
+            style={{ fontVariationSettings: fontWeights.bold }}
+            leadingIcon={DownloadIcon as IconComponent}
+            disabled={downloading || !grid}
+            onClick={() => {
+              void handleDownload();
+            }}
+          >
+            {downloading ? "Downloading…" : "Download"}
+          </Button>
+        </span>
       </PlaygroundSection>
     </div>
   );

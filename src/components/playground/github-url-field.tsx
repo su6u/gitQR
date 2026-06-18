@@ -4,6 +4,7 @@ import { Link2 } from "lucide-react";
 import { useCallback, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { InputField, InputGroup } from "@/components/ui/input-group";
+import { fontWeights } from "@/lib/font-weight";
 import { validateGithubUrl } from "@/lib/github-url";
 
 export function GithubUrlField({
@@ -90,16 +91,19 @@ export function GithubUrlField({
         spellCheck={false}
         aria-label="GitHub profile or repository URL"
         trailing={
-          <Button
-            type="button"
-            variant="primary"
-            size="sm"
-            className="h-7 shrink-0 px-3 text-[12px] text-foreground [&_span]:bg-brand [&_span]:group-hover:bg-brand-hover [&_span]:group-active:bg-brand-hover"
-            disabled={!value.trim() || loading}
-            onClick={handleSubmit}
-          >
-            {loading ? "…" : "enter"}
-          </Button>
+          <span className="playground-enter-pill inline-flex shrink-0 rounded-[16px]">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-7 shrink-0 px-3 text-[12px] text-foreground hover:text-foreground focus-visible:ring-[#FA70B3]/40"
+              style={{ fontVariationSettings: fontWeights.medium }}
+              disabled={!value.trim() || loading}
+              onClick={handleSubmit}
+            >
+              {loading ? "…" : "enter"}
+            </Button>
+          </span>
         }
       />
     </InputGroup>

@@ -189,6 +189,7 @@ const InputField = forwardRef<HTMLLabelElement, InputFieldProps>(
         className={cn(
           "flex flex-col cursor-text",
           compact ? "gap-0.5" : "gap-1",
+          trailing && "overflow-visible",
           disabled && "opacity-50 pointer-events-none",
           className,
         )}
@@ -231,6 +232,7 @@ const InputField = forwardRef<HTMLLabelElement, InputFieldProps>(
           className={cn(
             `flex items-center gap-1.5 ${shape.input} ring-1 transition-[background-color,box-shadow,color] duration-80 ease-[cubic-bezier(0.23,1,0.32,1)]`,
             compact ? "px-2 py-1" : "gap-2 px-3 py-2",
+            trailing && "overflow-visible",
             bgClass,
             ringClass,
           )}
@@ -262,7 +264,9 @@ const InputField = forwardRef<HTMLLabelElement, InputFieldProps>(
             }}
             {...props}
           />
-          {trailing}
+          {trailing ? (
+            <span className="relative z-10 shrink-0">{trailing}</span>
+          ) : null}
         </div>
 
         {/* Error message */}

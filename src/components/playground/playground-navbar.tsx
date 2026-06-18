@@ -1,17 +1,25 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { ScanLine, X } from "lucide-react";
 import type { CSSProperties } from "react";
 import { GithubIcon } from "@/components/icons/github-icon";
 import { QuestionMarkIcon } from "@/components/icons/question-mark-icon";
+import { ScanIcon } from "@/components/icons/scan-icon";
+import { XIcon } from "@/components/icons/x-icon";
+import { fontWeights } from "@/lib/font-weight";
 import { cn } from "@/lib/utils";
 import { usePlayground } from "./playground-provider";
 
 const GITHUB_REPO_URL = "https://github.com/su6u/git-qr";
 
 const navLinkClass =
-  "playground-nav-pill inline-flex h-9 items-center gap-1.5 rounded-[20px] px-4 text-[13px] text-foreground outline-none";
+  "relative z-10 inline-flex h-9 w-full items-center gap-1.5 rounded-[20px] px-4 text-[13px] text-foreground outline-none bg-transparent transition-transform duration-150 [@media(hover:hover)_and_(pointer:fine)]:hover:text-foreground [&_svg]:stroke-current";
+
+const navLinkStyle = {
+  fontVariationSettings: fontWeights.semibold,
+} satisfies CSSProperties;
+
+const navPillShellClass = "playground-nav-pill inline-flex rounded-[20px]";
 
 const EASE_OUT = [0.23, 1, 0.32, 1] as const;
 
@@ -31,7 +39,7 @@ function ScanModeIcon({ scanMode }: { scanMode: boolean }) {
             exit={{ opacity: 0, scale: 0.97, transition: iconExit }}
             transition={iconEnter}
           >
-            <X size={16} aria-hidden />
+            <XIcon size={16} />
           </motion.span>
         ) : (
           <motion.span
@@ -42,7 +50,7 @@ function ScanModeIcon({ scanMode }: { scanMode: boolean }) {
             exit={{ opacity: 0, scale: 0.97, transition: iconExit }}
             transition={iconEnter}
           >
-            <ScanLine size={16} aria-hidden />
+            <ScanIcon size={16} />
           </motion.span>
         )}
       </AnimatePresence>
@@ -87,30 +95,40 @@ export function PlaygroundNavbar({
       style={style}
       aria-label="Site links"
     >
-      <a
-        href={GITHUB_REPO_URL}
-        target="_blank"
-        rel="noopener noreferrer"
-        className={navLinkClass}
-      >
-        <GithubIcon size={16} />
-        Give a star
-      </a>
-      <button type="button" className={navLinkClass}>
-        <QuestionMarkIcon size={16} />
-        How it works
-      </button>
-      <button
-        type="button"
-        className={navLinkClass}
+      <span className={navPillShellClass}>
+        <a
+          href={GITHUB_REPO_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={navLinkClass}
+          style={navLinkStyle}
+        >
+          <GithubIcon size={16} />
+          Give a star
+        </a>
+      </span>
+      <span className={navPillShellClass}>
+        <button type="button" className={navLinkClass} style={navLinkStyle}>
+          <QuestionMarkIcon size={16} />
+          How it works
+        </button>
+      </span>
+      <span
+        className={navPillShellClass}
         data-scan-active={scanMode ? "true" : undefined}
-        aria-pressed={scanMode}
-        aria-label={scanMode ? "Exit scan mode" : "Enter scan mode"}
-        onClick={toggleScanMode}
       >
-        <ScanModeIcon scanMode={scanMode} />
-        <ScanModeLabel scanMode={scanMode} />
-      </button>
+        <button
+          type="button"
+          className={navLinkClass}
+          style={navLinkStyle}
+          aria-pressed={scanMode}
+          aria-label={scanMode ? "Exit scan mode" : "Enter scan mode"}
+          onClick={toggleScanMode}
+        >
+          <ScanModeIcon scanMode={scanMode} />
+          <ScanModeLabel scanMode={scanMode} />
+        </button>
+      </span>
     </nav>
   );
 }

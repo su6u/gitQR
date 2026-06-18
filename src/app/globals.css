@@ -387,31 +387,211 @@
   background-color: var(--playground-control);
 }
 
+/* Gap-edge: black outer shell + inset inner surface (shared vars). */
+.playground-gap-edge-pill,
+.playground-nav-pill,
+.playground-enter-pill {
+  position: relative;
+  isolation: isolate;
+  background-color: #000;
+}
+
+.playground-gap-edge-pill {
+  --playground-gap-edge-inset: 4px;
+  --playground-gap-edge-radius: 56px;
+}
+
 .playground-nav-pill {
-  @apply bg-playground-surface ring-1 ring-black/[0.08] shadow-[0_1px_2px_rgba(0,0,0,0.03),0_6px_20px_rgba(0,0,0,0.05)];
+  --playground-gap-edge-inset: 2px;
+  --playground-gap-edge-radius: 20px;
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.03),
+    0 6px 20px rgba(0, 0, 0, 0.05);
   transition:
     background-color 180ms var(--ease-out-strong),
     box-shadow 180ms var(--ease-out-strong),
     transform 150ms var(--ease-out-strong);
 }
 
-.playground-nav-pill:hover {
-  @apply bg-playground-control;
+.playground-enter-pill {
+  --playground-gap-edge-inset: 2px;
+  --playground-gap-edge-radius: 16px;
+  transition:
+    background-color 180ms var(--ease-out-strong),
+    transform 150ms var(--ease-out-strong);
 }
 
-.playground-nav-pill:active {
-  @apply bg-playground-track;
+.playground-nav-pill,
+.playground-enter-pill,
+.playground-download-pill {
+  --playground-accent-fill: #fa70b3;
+  --playground-accent-fill-hover: color-mix(in oklab, #fa70b3 86%, white);
+  --playground-accent-fill-active: color-mix(in oklab, #fa70b3 90%, black);
 }
 
-.playground-nav-pill:focus-visible {
-  @apply ring-1 ring-brand;
+.scan-copy-toast,
+.scan-copy-toaster [data-sonner-toast] {
+  background-color: #fff;
+  box-shadow:
+    0 0 0 2px #000,
+    0 1px 2px rgba(0, 0, 0, 0.03),
+    0 6px 20px rgba(0, 0, 0, 0.05);
+}
+
+.scan-copy-toaster [data-sonner-toast][data-mounted="true"] {
+  opacity: 1;
+}
+
+/* Anchor wrapper handles horizontal center; toaster sits in-flow inside it. */
+.scan-copy-toaster[data-sonner-toaster] {
+  position: relative !important;
+  inset: auto !important;
+  left: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  top: auto !important;
+  transform: none !important;
+  width: max-content !important;
+}
+
+.playground-gap-edge-pill::after {
+  content: "";
+  position: absolute;
+  inset: var(--playground-gap-edge-inset);
+  z-index: 0;
+  border-radius: calc(
+    var(--playground-gap-edge-radius) - var(--playground-gap-edge-inset)
+  );
+  background: #fff;
+  pointer-events: none;
+  transition: background-color 180ms var(--ease-out-strong);
+}
+
+.playground-nav-pill::after,
+.playground-enter-pill::after {
+  content: "";
+  position: absolute;
+  inset: var(--playground-gap-edge-inset);
+  z-index: 0;
+  border-radius: calc(
+    var(--playground-gap-edge-radius) - var(--playground-gap-edge-inset)
+  );
+  background: var(--playground-accent-fill);
+  pointer-events: none;
+  transition: background-color 150ms var(--ease-out-strong);
+}
+
+.playground-gap-edge-pill > *,
+.playground-nav-pill > *,
+.playground-enter-pill > * {
+  position: relative;
+  z-index: 1;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .playground-nav-pill:has(:hover)::after {
+    background-color: var(--playground-accent-fill-hover);
+  }
+
+  .playground-nav-pill:has(:hover) {
+    box-shadow:
+      0 1px 2px rgba(0, 0, 0, 0.04),
+      0 8px 22px rgba(0, 0, 0, 0.07);
+  }
+
+  .playground-enter-pill:has(:hover:not(:disabled))::after,
+  .playground-download-pill:has(:hover:not(:disabled))::after {
+    background-color: var(--playground-accent-fill-hover);
+  }
+}
+
+.playground-nav-pill:has(:active)::after,
+.playground-enter-pill:has(:active:not(:disabled))::after,
+.playground-download-pill:has(:active:not(:disabled))::after {
+  background-color: var(--playground-accent-fill-active);
+}
+
+.playground-nav-pill:has(:focus-visible),
+.playground-enter-pill:has(:focus-visible),
+.playground-download-pill:has(:focus-visible) {
+  @apply ring-1 ring-[#FA70B3] ring-offset-2 ring-offset-background;
+}
+
+.playground-nav-pill[data-scan-active="true"]::after {
+  background-color: var(--playground-accent-fill);
 }
 
 .playground-nav-pill[data-scan-active="true"] {
-  @apply bg-playground-track ring-scan-accent/30 shadow-[0_0_0_3px_color-mix(in_oklab,var(--scan-accent)_12%,transparent),0_1px_2px_rgba(0,0,0,0.03),0_6px_20px_rgba(0,0,0,0.05)];
+  box-shadow:
+    0 0 0 3px color-mix(in oklab, var(--scan-accent) 12%, transparent),
+    0 1px 2px rgba(0, 0, 0, 0.03),
+    0 6px 20px rgba(0, 0, 0, 0.05);
 }
 
-.playground-nav-pill:active:not(:disabled) {
+.playground-enter-pill .group > span[aria-hidden] {
+  background-color: transparent !important;
+}
+
+.playground-enter-pill .group:hover > span[aria-hidden],
+.playground-enter-pill .group:active > span[aria-hidden] {
+  background-color: transparent !important;
+}
+
+.playground-download-pill {
+  position: relative;
+  isolation: isolate;
+  display: block;
+  width: 100%;
+  border-radius: 9999px;
+  background-color: #000;
+  --playground-gap-edge-inset: 2px;
+  --playground-gap-edge-radius: 9999px;
+  transition:
+    background-color 180ms var(--ease-out-strong),
+    transform 150ms var(--ease-out-strong);
+}
+
+.playground-download-pill::after {
+  content: "";
+  position: absolute;
+  inset: var(--playground-gap-edge-inset);
+  z-index: 0;
+  border-radius: calc(
+    var(--playground-gap-edge-radius) - var(--playground-gap-edge-inset)
+  );
+  background: var(--playground-accent-fill);
+  pointer-events: none;
+  transition: background-color 150ms var(--ease-out-strong);
+}
+
+.playground-download-pill > * {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+}
+
+.playground-download-pill .group > span[aria-hidden] {
+  background-color: transparent !important;
+}
+
+.playground-download-pill .group:hover > span[aria-hidden],
+.playground-download-pill .group:active > span[aria-hidden] {
+  background-color: transparent !important;
+}
+
+.playground-enter-pill:has(:disabled),
+.playground-download-pill:has(:disabled) {
+  background-color: color-mix(in oklab, #fa70b3 58%, white);
+}
+
+.playground-enter-pill:has(:disabled)::after,
+.playground-download-pill:has(:disabled)::after {
+  background-color: color-mix(in oklab, #fa70b3 38%, white);
+}
+
+.playground-nav-pill:active:not(:disabled),
+.playground-enter-pill:active:not(:disabled),
+.playground-download-pill:active:not(:disabled) {
   transform: scale(0.96);
 }
 

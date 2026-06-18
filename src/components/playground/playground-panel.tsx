@@ -10,7 +10,7 @@ export function PlaygroundPanel() {
   const { generate, loading, error } = usePlayground();
 
   return (
-    <div className="flex h-full min-h-0 flex-col px-5 pt-6 pb-4">
+    <div className="flex h-full min-h-0 flex-col px-5 pt-4 pb-4">
       <header className="playground-panel-section shrink-0 pb-4 text-center">
         <h2
           className={cn(
@@ -22,7 +22,7 @@ export function PlaygroundPanel() {
         </h2>
       </header>
       <div className="mt-6 flex min-h-0 flex-1 flex-col gap-4">
-        <div className="shrink-0">
+        <div className="relative z-10 shrink-0">
           <GithubUrlField onSubmit={generate} loading={loading} />
           {error ? (
             <p className="mt-2 text-[12px] text-destructive" role="alert">
@@ -31,7 +31,7 @@ export function PlaygroundPanel() {
           ) : null}
         </div>
         <div
-          className="playground-panel-section flex min-h-0 flex-1 flex-col pt-2"
+          className="playground-panel-section flex min-h-0 flex-1 flex-col overflow-y-auto pt-2"
           style={{ animationDelay: "120ms" }}
         >
           <PlaygroundCustomization />
