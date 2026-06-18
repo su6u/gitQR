@@ -291,17 +291,17 @@ interface TooltipValueProps {
 
 function TooltipValue({ value, formatValue, motionX }: TooltipValueProps) {
   const shape = useShape();
-  const tooltipX = useTransform(motionX, (x) => x + THUMB_SIZE / 2);
+  const tooltipTransform = useTransform(motionX, (x) => {
+    const cx = x + THUMB_SIZE / 2;
+    return `translate(${cx}px, -16px) translateX(-50%)`;
+  });
   return (
     <motion.div
-      className="absolute -translate-x-1/2 pointer-events-none z-20"
-      style={{
-        x: tooltipX,
-        top: -16,
-      }}
-      initial={{ opacity: 0, y: 4 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: 4, transition: spring.fast.exit }}
+      className="absolute pointer-events-none z-20"
+      style={{ transform: tooltipTransform }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0, transition: spring.fast.exit }}
       transition={spring.fast}
     >
       <span
@@ -311,6 +311,55 @@ function TooltipValue({ value, formatValue, motionX }: TooltipValueProps) {
         {formatValue(value)}
       </span>
     </motion.div>
+  );
+}
+
+interface VisualThumbProps {
+  motionX: MotionValue<number>;
+  focused: boolean;
+  thumbColor?: string;
+  thumbBorderColor?: string;
+}
+
+function VisualThumb({
+  motionX,
+  focused,
+  thumbColor,
+  thumbBorderColor,
+}: VisualThumbProps) {
+  const thumbTransform = useTransform(motionX, (x) => `translateX(${x}px)`);
+  return (
+    <motion.span
+      className="flex items-center justify-center pointer-events-none"
+      style={{
+        width: THUMB_SIZE,
+        height: THUMB_SIZE,
+        marginTop: -THUMB_SIZE / 2,
+        transform: thumbTransform,
+        position: "absolute",
+        top: "50%",
+        left: 0,
+        zIndex: 10,
+      }}
+    >
+      <span
+        className="block rounded-full"
+        style={{
+          width: THUMB_SIZE_REST,
+          height: THUMB_SIZE_REST,
+          backgroundColor: thumbColor ?? "white",
+          boxShadow: "0 1px 2px rgba(0,0,0,0.1)",
+          border: thumbBorderColor ? `1px solid ${thumbBorderColor}` : undefined,
+        }}
+      />
+      <motion.span
+        className="absolute rounded-full border border-brand pointer-events-none"
+        initial={false}
+        animate={{ opacity: focused ? 1 : 0 }}
+        transition={spring.fast}
+        style={{ width: THUMB_SIZE + 4, height: THUMB_SIZE + 4 }}
+      />
+    </motion.span>
   );
 }
 
@@ -482,10 +531,10 @@ const Slider = forwardRef<HTMLDivElement, SliderProps>(
           const mn = minRef.current;
           const mx = maxRef.current;
           const px0 = valueToPixel(v[0], mn, mx, w);
-          animate(motionX0, px0, spring.moderate);
+          motionX0.set(px0);
           if (isRange && v[1] !== undefined) {
             const px1 = valueToPixel(v[1], mn, mx, w);
-            animate(motionX1, px1, spring.moderate);
+            motionX1.set(px1);
           }
         }
       });
@@ -500,10 +549,10 @@ const Slider = forwardRef<HTMLDivElement, SliderProps>(
       const tw = trackWidthRef.current;
       if (tw <= 0) return;
       const px0 = valueToPixel(values[0], min, max, tw);
-      animate(motionX0, px0, spring.moderate);
+      motionX0.set(px0);
       if (isRange && values[1] !== undefined) {
         const px1 = valueToPixel(values[1], min, max, tw);
-        animate(motionX1, px1, spring.moderate);
+        motionX1.set(px1);
       }
     }, [values, min, max, isRange, motionX0, motionX1]);
 
@@ -724,52 +773,15 @@ const Slider = forwardRef<HTMLDivElement, SliderProps>(
     );
 
     // --- Render visual thumb (not Radix — purely visual) ---
-    const renderVisualThumb = (index: number) => {
-      const motionX = index === 0 ? motionX0 : motionX1;
-      return (
-        <motion.span
-          key={`visual-thumb-${index}`}
-          className="flex items-center justify-center pointer-events-none"
-          style={{
-            width: THUMB_SIZE,
-            height: THUMB_SIZE,
-            marginTop: -THUMB_SIZE / 2,
-            x: motionX,
-            position: "absolute",
-            top: "50%",
-            left: 0,
-            zIndex: 10,
-          }}
-          initial={false}
-        >
-          <motion.span
-            className="block rounded-full"
-            initial={false}
-            animate={{
-              width: THUMB_SIZE_REST,
-              height: THUMB_SIZE_REST,
-            }}
-            transition={spring.fast}
-            style={{
-              backgroundColor: thumbColor ?? "white",
-              boxShadow: "0 1px 2px rgba(0,0,0,0.1)",
-              border: thumbBorderColor ? `1px solid ${thumbBorderColor}` : undefined,
-            }}
-          />
-          {/* Focus ring */}
-          <motion.span
-            className="absolute rounded-full border border-brand pointer-events-none"
-            initial={false}
-            animate={{
-              opacity: focusedThumb === index ? 1 : 0,
-              width: THUMB_SIZE + 4,
-              height: THUMB_SIZE + 4,
-            }}
-            transition={spring.fast}
-          />
-        </motion.span>
-      );
-    };
+    const renderVisualThumb = (index: number) => (
+      <VisualThumb
+        key={`visual-thumb-${index}`}
+        motionX={index === 0 ? motionX0 : motionX1}
+        focused={focusedThumb === index}
+        thumbColor={thumbColor}
+        thumbBorderColor={thumbBorderColor}
+      />
+    );
 
     return (
       <div
@@ -892,10 +904,10 @@ const Slider = forwardRef<HTMLDivElement, SliderProps>(
               {hoverPreview && showHoverTooltip && !isPressed && valuePosition !== "tooltip" && (
                 <motion.div
                   key="hover-tooltip"
-                  className="absolute -translate-x-1/2 pointer-events-none z-20"
-                  initial={{ opacity: 0, y: 4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 4, transition: spring.fast.exit }}
+                  className="absolute pointer-events-none z-20"
+                  initial={{ opacity: 0, transform: "translate(-50%, 4px)" }}
+                  animate={{ opacity: 1, transform: "translate(-50%, 0)" }}
+                  exit={{ opacity: 0, transform: "translate(-50%, 4px)", transition: spring.fast.exit }}
                   transition={spring.fast}
                   style={{
                     left: hoverPreview.cursorX,
@@ -913,17 +925,13 @@ const Slider = forwardRef<HTMLDivElement, SliderProps>(
             </AnimatePresence>
 
             {/* Track background */}
-            <motion.div
+            <div
               className={cn("absolute border border-border overflow-hidden rounded-full", trackClassName)}
-              initial={false}
-              animate={{
-                height: TRACK_BG_HEIGHT,
-                top: 8 + (THUMB_SIZE - TRACK_BG_HEIGHT) / 2,
-              }}
-              transition={spring.fast}
               style={{
                 left: TRACK_INSET,
                 right: TRACK_INSET,
+                height: TRACK_BG_HEIGHT,
+                top: 8 + (THUMB_SIZE - TRACK_BG_HEIGHT) / 2,
                 backgroundColor: "transparent",
                 ...trackStyle,
               }}
@@ -960,7 +968,7 @@ const Slider = forwardRef<HTMLDivElement, SliderProps>(
                 }}
               />
 
-            </motion.div>
+            </div>
 
             {/* Step dots — masked so filled side is hidden */}
             {stepDots.length > 0 && (
@@ -1183,12 +1191,12 @@ const SliderComfortable = forwardRef<HTMLDivElement, SliderComfortableProps>(
       [variant, pipSteps, pipCount, min, max, step, fillPercent, zeroOffset]
     );
 
-    // Sync fill on programmatic value change
+    // Sync fill on keyboard/programmatic value change — snap, no spring
     useEffect(() => {
       if (dragging.current || handleDragging.current) return;
       const percent = max === min ? 0 : Math.max(0, Math.min(1, (value - min) / (max - min)));
-      animate(fillPercent, percent, spring.fast);
-      animate(zeroOffset, value === min ? zeroTarget : 0, spring.fast);
+      fillPercent.set(percent);
+      zeroOffset.set(value === min ? zeroTarget : 0);
     }, [value, min, max, variant, fillPercent, zeroOffset, zeroTarget]);
 
     const getValueFromX = useCallback(
@@ -1324,10 +1332,10 @@ const SliderComfortable = forwardRef<HTMLDivElement, SliderComfortableProps>(
           {hoverPreview && showHoverTooltip && !isPressed && (
             <motion.div
               key="hover-tooltip"
-              className="absolute -translate-x-1/2 pointer-events-none z-20"
-              initial={{ opacity: 0, y: 4 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 4, transition: spring.fast.exit }}
+              className="absolute pointer-events-none z-20"
+              initial={{ opacity: 0, transform: "translate(-50%, 4px)" }}
+              animate={{ opacity: 1, transform: "translate(-50%, 0)" }}
+              exit={{ opacity: 0, transform: "translate(-50%, 4px)", transition: spring.fast.exit }}
               transition={spring.fast}
               style={{
                 left: hoverPreview.cursorX,
