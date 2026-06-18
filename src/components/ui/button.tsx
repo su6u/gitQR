@@ -11,7 +11,7 @@ const buttonVariants = cva(
   [
     "group relative isolate inline-flex items-center justify-center outline-none cursor-pointer",
     "text-box-trim-both text-box-edge-cap-alphabetic",
-    "transition-colors duration-80",
+    "transition-[color,transform] duration-80 [@media(hover:hover)_and_(pointer:fine)]:hover:text-foreground",
     "disabled:opacity-50 disabled:pointer-events-none",
     "focus-visible:ring-1 focus-visible:ring-brand",
   ],
@@ -21,7 +21,7 @@ const buttonVariants = cva(
         primary: "text-background",
         secondary: "text-foreground",
         tertiary: "border border-border text-foreground",
-        ghost: "text-muted-foreground hover:text-foreground",
+        ghost: "text-muted-foreground [@media(hover:hover)_and_(pointer:fine)]:hover:text-foreground",
       },
       size: {
         sm: "h-7 px-3 text-[12px] gap-1",
@@ -64,10 +64,13 @@ interface ButtonProps
 
 const bgVariants: Record<string, string> = {
   primary:
-    "bg-foreground group-hover:bg-foreground/90 group-active:bg-foreground/80",
-  secondary: "bg-accent group-hover:bg-accent/80 group-active:bg-accent",
-  tertiary: "bg-transparent group-hover:bg-hover group-active:bg-active",
-  ghost: "bg-transparent group-hover:bg-hover group-active:bg-active",
+    "bg-foreground [@media(hover:hover)_and_(pointer:fine)]:group-hover:bg-foreground/90 group-active:bg-foreground/80",
+  secondary:
+    "bg-accent [@media(hover:hover)_and_(pointer:fine)]:group-hover:bg-accent/80 group-active:bg-accent",
+  tertiary:
+    "bg-transparent [@media(hover:hover)_and_(pointer:fine)]:group-hover:bg-hover group-active:bg-active",
+  ghost:
+    "bg-transparent [@media(hover:hover)_and_(pointer:fine)]:group-hover:bg-hover group-active:bg-active",
 };
 
 const activeBgVariants: Record<string, string> = {
@@ -126,7 +129,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         <span
           aria-hidden
           className={cn(
-            "absolute inset-0 rounded-[inherit] transition-[background-color,transform] duration-80 group-active:scale-[0.98]",
+            "absolute inset-0 rounded-[inherit] transition-[background-color,transform] duration-80 group-active:scale-[0.96]",
             bgClass,
           )}
         />
