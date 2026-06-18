@@ -1,7 +1,8 @@
 "use client";
 
 import type { CSSProperties, RefObject } from "react";
-import { useLayoutEffect, useRef, useState } from "react";
+import { useLayoutEffect, useMemo, useRef, useState } from "react";
+import { placeBoardDoodles } from "@/lib/qr-doodles";
 import { isFinderModule, isFinderModuleInCircle } from "@/lib/qr-finder";
 import {
   moduleCountForSpan,
@@ -9,6 +10,10 @@ import {
   qrModuleIndex,
   qrRegionRect,
 } from "@/lib/qr-layout";
+import {
+  buildRevealSchedule,
+  QR_REVEAL_TOTAL_MS,
+} from "@/lib/qr-reveal";
 import { cn } from "@/lib/utils";
 import { usePlayground } from "./playground-provider";
 
@@ -37,7 +42,13 @@ export function QrBoard({
   const hoverEnabledRef = useRef(false);
   const reducedMotionRef = useRef(false);
   const gridDimsRef = useRef({ cols: 0, rows: 0 });
+  const prevGridRef = useRef<typeof styledGrid>(null);
   const [layout, setLayout] = useState({ cols: 0, rows: 0 });
+  const [revealing, setRevealing] = useState(false);
+  const [revealed, setRevealed] = useState(false);
+  const [revealDelays, setRevealDelays] = useState<Map<number, number>>(
+    () => new Map(),
+  );
 
   const hasGeneratedGrid = Boolean(styledGrid?.modules.length);
 
@@ -61,9 +72,64 @@ export function QrBoard({
 
   const moduleCountTotal = layout.cols * layout.rows;
 
+  const doodleFills = useMemo(
+    () => placeBoardDoodles(layout.rows, layout.cols),
+    [layout.rows, layout.cols],
+  );
+
   useLayoutEffect(() => {
     gridDimsRef.current = layout;
   }, [layout]);
+
+  useLayoutEffect(() => {
+    if (!styledGrid) {
+      prevGridRef.current = null;
+      setRevealing(false);
+      setRevealed(false);
+      setRevealDelays(new Map());
+      return;
+    }
+
+    if (layout.cols === 0 || layout.rows === 0) return;
+
+    if (styledGrid === prevGridRef.current) return;
+
+    prevGridRef.current = styledGrid;
+    setRevealed(false);
+
+    const darkCellIndices: number[] = [];
+    for (let i = 0; i < moduleCountTotal; i++) {
+      const row = Math.floor(i / layout.cols);
+      const col = i % layout.cols;
+      const qrIndex = qrModuleIndex(row, col, layout.rows, layout.cols);
+      if (qrIndex === null) continue;
+      const mod = styledGrid.modules[qrIndex];
+      if (!mod?.isDark) continue;
+      if (
+        isFinderModule(mod.row, mod.col, styledGrid.size) &&
+        !isFinderModuleInCircle(mod.row, mod.col, styledGrid.size)
+      ) {
+        continue;
+      }
+      darkCellIndices.push(i);
+    }
+
+    setRevealDelays(buildRevealSchedule(darkCellIndices));
+    setRevealing(true);
+
+    const startReveal = window.requestAnimationFrame(() => {
+      window.requestAnimationFrame(() => setRevealed(true));
+    });
+    const timer = window.setTimeout(() => {
+      setRevealing(false);
+      setRevealed(false);
+    }, QR_REVEAL_TOTAL_MS);
+
+    return () => {
+      window.cancelAnimationFrame(startReveal);
+      window.clearTimeout(timer);
+    };
+  }, [styledGrid, layout.cols, layout.rows, moduleCountTotal]);
 
   // Reset magnet offsets when the QR content changes without a resize.
   // biome-ignore lint/correctness/useExhaustiveDependencies: styledGrid triggers cell reset on regenerate
@@ -274,6 +340,7 @@ export function QrBoard({
         <div
           ref={gridRef}
           className="qr-grid grid h-full w-full"
+          data-reveal={revealing ? "" : undefined}
           style={{
             gap: `${QR_BOARD_GAP_PX}px`,
             gridTemplateColumns: `repeat(${layout.cols}, minmax(0, 1fr))`,
@@ -300,9 +367,14 @@ export function QrBoard({
               styledGrid != null &&
               isFinderModule(mod.row, mod.col, styledGrid.size) &&
               !isFinderModuleInCircle(mod.row, mod.col, styledGrid.size);
+            const doodleFill = qrIndex === null ? doodleFills.get(i) : undefined;
             const fill = isFinderOutsideCircle
               ? DEFAULT_FILL
-              : (mod?.fill ?? DEFAULT_FILL);
+              : (mod?.fill ?? doodleFill ?? DEFAULT_FILL);
+            const shouldReveal =
+              Boolean(mod?.isDark) &&
+              revealing &&
+              !isFinderOutsideCircle;
 
             return (
               <span
@@ -311,8 +383,19 @@ export function QrBoard({
                 ref={(el) => {
                   cellsRef.current[i] = el;
                 }}
-                className="qr-cell block min-h-0 min-w-0 rounded-[5px]"
-                style={{ backgroundColor: fill }}
+                className={cn(
+                  "qr-cell block min-h-0 min-w-0 rounded-[5px]",
+                  shouldReveal && "qr-cell--reveal",
+                  shouldReveal && revealed && "qr-cell--lit",
+                )}
+                style={{
+                  ...(shouldReveal
+                    ? {
+                        "--qr-target-fill": fill,
+                        "--qr-reveal-delay": `${revealDelays.get(i) ?? 0}ms`,
+                      }
+                    : { backgroundColor: fill }),
+                }}
                 title={
                   mod
                     ? `${mod.contribution.date || "no date"} · level ${mod.contribution.level}${mod.isDark ? " · QR dark" : ""}`

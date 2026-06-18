@@ -5,7 +5,9 @@ import {
   type ReactNode,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import { toast } from "sonner";
@@ -32,6 +34,9 @@ interface PlaygroundContextValue {
 
 const PlaygroundContext = createContext<PlaygroundContextValue | null>(null);
 
+/** Shown on the board before the user submits a URL. Input stays empty. */
+const DEMO_GITHUB_URL = "https://github.com/su6u";
+
 async function fetchContributionGrid(
   username: string,
 ): Promise<ContributionGrid> {
@@ -52,6 +57,12 @@ async function fetchContributionGrid(
   }
 
   return payload.weeks;
+}
+
+async function loadStyledGrid(url: string): Promise<StyledQrGrid> {
+  const username = githubUsernameFromUrl(url);
+  const contributions = await fetchContributionGrid(username);
+  return buildStyledQrGrid(url, contributions);
 }
 
 function copyTextDuringUserGesture(text: string) {
@@ -76,6 +87,26 @@ export function PlaygroundProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const [scanMode, setScanMode] = useState(false);
   const [scanStatus, setScanStatus] = useState<ScanStatus>("idle");
+  const hasUserSubmittedRef = useRef(false);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    void (async () => {
+      try {
+        const styled = await loadStyledGrid(DEMO_GITHUB_URL);
+        if (!cancelled && !hasUserSubmittedRef.current) {
+          setGrid(styled);
+        }
+      } catch {
+        // Demo unavailable — board stays empty until user submits.
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const resetScanFeedback = useCallback(() => {
     setScanStatus("idle");
@@ -98,13 +129,12 @@ export function PlaygroundProvider({ children }: { children: ReactNode }) {
   }, [resetScanFeedback]);
 
   const generate = useCallback(async (url: string) => {
+    hasUserSubmittedRef.current = true;
     setLoading(true);
     setError(null);
 
     try {
-      const username = githubUsernameFromUrl(url);
-      const contributions = await fetchContributionGrid(username);
-      const styled = await buildStyledQrGrid(url, contributions);
+      const styled = await loadStyledGrid(url);
       setGithubUrl(url);
       setGrid(styled);
     } catch (err) {
