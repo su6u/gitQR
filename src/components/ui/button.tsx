@@ -119,7 +119,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
           shape.button,
           className,
         )}
-        disabled={isDisabled}
+        disabled={isDisabled ? true : undefined}
         style={style}
         {...props}
       >

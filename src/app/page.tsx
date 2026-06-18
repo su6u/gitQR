@@ -1,5 +1,5 @@
-import { Playground } from "@/components/playground/playground";
+import { PlaygroundClient } from "@/components/playground/playground-client";
 
 export default function Page() {
-  return <Playground />;
+  return <PlaygroundClient />;
 }
