@@ -12,6 +12,7 @@ import {
 } from "@/lib/qr-layout";
 import {
   buildRevealSchedule,
+  collectRevealIndices,
   QR_REVEAL_TOTAL_MS,
 } from "@/lib/qr-reveal";
 import { cn } from "@/lib/utils";
@@ -43,9 +44,12 @@ export function QrBoard({
   const reducedMotionRef = useRef(false);
   const gridDimsRef = useRef({ cols: 0, rows: 0 });
   const prevGridRef = useRef<typeof styledGrid>(null);
+  const gridGenerationRef = useRef(0);
+  const lastRevealKeyRef = useRef<string | null>(null);
   const [layout, setLayout] = useState({ cols: 0, rows: 0 });
   const [revealing, setRevealing] = useState(false);
   const [revealed, setRevealed] = useState(false);
+  const [revealFinished, setRevealFinished] = useState(false);
   const [revealDelays, setRevealDelays] = useState<Map<number, number>>(
     () => new Map(),
   );
@@ -82,39 +86,40 @@ export function QrBoard({
   }, [layout]);
 
   useLayoutEffect(() => {
+    if (layout.cols === 0 || layout.rows === 0) return;
+
+    if (styledGrid && styledGrid !== prevGridRef.current) {
+      prevGridRef.current = styledGrid;
+      gridGenerationRef.current += 1;
+    }
     if (!styledGrid) {
       prevGridRef.current = null;
+    }
+
+    const revealIndices = collectRevealIndices(
+      styledGrid,
+      layout.rows,
+      layout.cols,
+      doodleFills,
+    );
+
+    if (revealIndices.length === 0) {
       setRevealing(false);
       setRevealed(false);
       setRevealDelays(new Map());
+      setRevealFinished(true);
       return;
     }
 
-    if (layout.cols === 0 || layout.rows === 0) return;
+    const revealKey = styledGrid
+      ? `grid:${layout.cols}x${layout.rows}:d${doodleFills.size}:g${gridGenerationRef.current}`
+      : `empty:${layout.cols}x${layout.rows}:d${doodleFills.size}`;
+    if (revealKey === lastRevealKeyRef.current) return;
+    lastRevealKeyRef.current = revealKey;
 
-    if (styledGrid === prevGridRef.current) return;
-
-    prevGridRef.current = styledGrid;
+    setRevealFinished(false);
     setRevealed(false);
-
-    const darkCellIndices: number[] = [];
-    for (let i = 0; i < moduleCountTotal; i++) {
-      const row = Math.floor(i / layout.cols);
-      const col = i % layout.cols;
-      const qrIndex = qrModuleIndex(row, col, layout.rows, layout.cols);
-      if (qrIndex === null) continue;
-      const mod = styledGrid.modules[qrIndex];
-      if (!mod?.isDark) continue;
-      if (
-        isFinderModule(mod.row, mod.col, styledGrid.size) &&
-        !isFinderModuleInCircle(mod.row, mod.col, styledGrid.size)
-      ) {
-        continue;
-      }
-      darkCellIndices.push(i);
-    }
-
-    setRevealDelays(buildRevealSchedule(darkCellIndices));
+    setRevealDelays(buildRevealSchedule(revealIndices));
     setRevealing(true);
 
     const startReveal = window.requestAnimationFrame(() => {
@@ -123,13 +128,14 @@ export function QrBoard({
     const timer = window.setTimeout(() => {
       setRevealing(false);
       setRevealed(false);
+      setRevealFinished(true);
     }, QR_REVEAL_TOTAL_MS);
 
     return () => {
       window.cancelAnimationFrame(startReveal);
       window.clearTimeout(timer);
     };
-  }, [styledGrid, layout.cols, layout.rows, moduleCountTotal]);
+  }, [styledGrid, layout.cols, layout.rows, doodleFills]);
 
   // Reset magnet offsets when the QR content changes without a resize.
   // biome-ignore lint/correctness/useExhaustiveDependencies: styledGrid triggers cell reset on regenerate
@@ -371,10 +377,16 @@ export function QrBoard({
             const fill = isFinderOutsideCircle
               ? DEFAULT_FILL
               : (mod?.fill ?? doodleFill ?? DEFAULT_FILL);
+            const isAnimatedCell =
+              doodleFill !== undefined ||
+              (Boolean(mod?.isDark) && !isFinderOutsideCircle);
             const shouldReveal =
-              Boolean(mod?.isDark) &&
               revealing &&
+              revealDelays.has(i) &&
+              isAnimatedCell &&
               !isFinderOutsideCircle;
+            const awaitReveal =
+              isAnimatedCell && !revealFinished && !shouldReveal;
 
             return (
               <span
@@ -394,7 +406,9 @@ export function QrBoard({
                         "--qr-target-fill": fill,
                         "--qr-reveal-delay": `${revealDelays.get(i) ?? 0}ms`,
                       }
-                    : { backgroundColor: fill }),
+                    : {
+                        backgroundColor: awaitReveal ? DEFAULT_FILL : fill,
+                      }),
                 }}
                 title={
                   mod
