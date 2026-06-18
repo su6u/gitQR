@@ -18,6 +18,7 @@ import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { spring } from "@/lib/springs";
+import { popoverEnter, popoverEnterFrom } from "@/lib/popover-enter";
 import { fontWeights } from "@/lib/font-weight";
 import { useShape } from "@/lib/shape-context";
 import { useSurface, SurfaceProvider } from "@/lib/surface-context";
@@ -594,17 +595,13 @@ function SaturationSquare({ h, s, v, onChange }: SaturationSquareProps) {
           background: `linear-gradient(to top, #000, transparent), linear-gradient(to right, #fff, hsl(${h}, 100%, 50%))`,
         }}
       />
-      <motion.div
+      <div
         className="absolute pointer-events-none rounded-full"
-        initial={false}
-        animate={{
+        style={{
           left: `${s * 100}%`,
           top: `${(1 - v) * 100}%`,
           width: 18,
           height: 18,
-        }}
-        transition={{ duration: 0 }}
-        style={{
           transform: "translate(-50%, -50%)",
           border: "1px solid white",
           boxShadow: "0 0 0 1px rgba(0,0,0,1)",
@@ -896,8 +893,8 @@ function FormatDropdown({
         >
           <motion.div
             ref={panelRef}
-            initial={{ opacity: 0, y: -4, scaleY: 0.96 }}
-            animate={{ opacity: 1, y: 0, scaleY: 1 }}
+            initial={popoverEnter.hidden}
+            animate={popoverEnter.visible}
             transition={spring.fast}
             style={{ transformOrigin: "top center", minWidth: pos.width }}
           >
@@ -1882,9 +1879,9 @@ const ColorPickerPopover = forwardRef<HTMLDivElement, ColorPickerPopoverProps>(
                   (panelRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
                   setPanelEl(node);
                 }}
-                initial={{ opacity: 0, y: resolvedPos.placement === "bottom" ? -4 : 4, scaleY: 0.96 }}
-                animate={{ opacity: 1, y: 0, scaleY: 1 }}
-                exit={{ opacity: 0, y: resolvedPos.placement === "bottom" ? -4 : 4, scaleY: 0.96 }}
+                initial={popoverEnterFrom(resolvedPos.placement).hidden}
+                animate={popoverEnterFrom(resolvedPos.placement).visible}
+                exit={popoverEnterFrom(resolvedPos.placement).hidden}
                 transition={spring.moderate}
                 style={{ transformOrigin: resolvedPos.transformOrigin }}
               >
