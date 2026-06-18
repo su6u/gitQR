@@ -8,7 +8,6 @@ import { cn } from "@/lib/utils";
 import { usePlayground } from "./playground-provider";
 
 const SCAN_EASE_OUT = [0.23, 1, 0.32, 1] as const;
-const SCAN_EASE_IN = [0.55, 0, 1, 0.45] as const;
 const ARROW_INFO_SRC = "/images/arrow_info.svg";
 /** Matches public/images/arrow_info.svg viewBox="0 0 958 235". */
 const ARROW_INFO_ASPECT = 235 / 958;
@@ -92,7 +91,7 @@ export function QrScanOverlay({
     : { duration: 0.24, ease: SCAN_EASE_OUT };
   const exitTransition = reduceMotion
     ? { duration: 0 }
-    : { duration: 0.15, ease: SCAN_EASE_IN };
+    : { duration: 0.12, ease: SCAN_EASE_OUT };
 
   return (
     <AnimatePresence>
@@ -103,8 +102,8 @@ export function QrScanOverlay({
           aria-hidden={false}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={exitTransition}
+          exit={{ opacity: 0, transition: exitTransition }}
+          transition={enterTransition}
         >
           {scanTarget ? (
             <>
@@ -194,16 +193,11 @@ export function QrScanOverlay({
                 initial={
                   reduceMotion
                     ? false
-                    : {
-                        opacity: 0,
-                        transform: "scale(0.95)",
-                        filter: "blur(4px)",
-                      }
+                    : { opacity: 0, transform: "scale(0.95)" }
                 }
                 animate={{
                   opacity: isScanning ? 0.72 : 0.9,
                   transform: "scale(1)",
-                  filter: "blur(0px)",
                 }}
                 exit={
                   reduceMotion
@@ -211,7 +205,6 @@ export function QrScanOverlay({
                     : {
                         opacity: 0,
                         transform: "scale(0.97)",
-                        filter: "blur(2px)",
                         transition: exitTransition,
                       }
                 }
