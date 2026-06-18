@@ -45,7 +45,7 @@ export function QrBoard({
   const gridDimsRef = useRef({ cols: 0, rows: 0 });
   const prevGridRef = useRef<typeof styledGrid>(null);
   const gridGenerationRef = useRef(0);
-  const lastRevealKeyRef = useRef<string | null>(null);
+  const lastCompletedRevealKeyRef = useRef<string | null>(null);
   const [layout, setLayout] = useState({ cols: 0, rows: 0 });
   const [revealing, setRevealing] = useState(false);
   const [revealed, setRevealed] = useState(false);
@@ -88,12 +88,15 @@ export function QrBoard({
   useLayoutEffect(() => {
     if (layout.cols === 0 || layout.rows === 0) return;
 
-    if (styledGrid && styledGrid !== prevGridRef.current) {
-      prevGridRef.current = styledGrid;
-      gridGenerationRef.current += 1;
-    }
+    const hadGrid = prevGridRef.current !== null;
+    const gridChanged = styledGrid !== prevGridRef.current;
+    const isRegenerate = hadGrid && gridChanged && styledGrid !== null;
+
     if (!styledGrid) {
       prevGridRef.current = null;
+    } else if (gridChanged) {
+      prevGridRef.current = styledGrid;
+      gridGenerationRef.current += 1;
     }
 
     const revealIndices = collectRevealIndices(
@@ -114,11 +117,12 @@ export function QrBoard({
     const revealKey = styledGrid
       ? `grid:${layout.cols}x${layout.rows}:d${doodleFills.size}:g${gridGenerationRef.current}`
       : `empty:${layout.cols}x${layout.rows}:d${doodleFills.size}`;
-    if (revealKey === lastRevealKeyRef.current) return;
-    lastRevealKeyRef.current = revealKey;
+    if (revealKey === lastCompletedRevealKeyRef.current) return;
 
-    setRevealFinished(false);
     setRevealed(false);
+    if (!isRegenerate) {
+      setRevealFinished(false);
+    }
     setRevealDelays(buildRevealSchedule(revealIndices));
     setRevealing(true);
 
@@ -129,6 +133,7 @@ export function QrBoard({
       setRevealing(false);
       setRevealed(false);
       setRevealFinished(true);
+      lastCompletedRevealKeyRef.current = revealKey;
     }, QR_REVEAL_TOTAL_MS);
 
     return () => {
@@ -335,11 +340,7 @@ export function QrBoard({
   return (
     <div
       ref={containerRef}
-      className={cn(
-        "min-h-0 h-full w-full",
-        className,
-        loading && "opacity-60",
-      )}
+      className={cn("min-h-0 h-full w-full", className)}
       style={style}
     >
       {layout.cols > 0 && layout.rows > 0 && (
