@@ -1,6 +1,7 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
+import { isPlaygroundEnterReload } from "@/lib/playground-enter-seen";
 import { Pill } from "./pill";
 import { PlaygroundNavbar } from "./playground-navbar";
 import { PlaygroundPanel } from "./playground-panel";
@@ -18,9 +19,13 @@ export function Playground() {
 
 function PlaygroundMain() {
   const boardAreaRef = useRef<HTMLDivElement>(null);
+  const skipEnter = useState(isPlaygroundEnterReload)[0];
 
   return (
-    <main className="relative h-svh w-full overflow-hidden bg-white">
+    <main
+      className="relative h-svh w-full overflow-hidden bg-white"
+      {...(skipEnter ? { "data-enter-seen": true } : {})}
+    >
       <div
         ref={boardAreaRef}
         className="playground-enter-item absolute inset-0"

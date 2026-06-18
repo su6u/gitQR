@@ -347,6 +347,13 @@
   animation: playground-enter 420ms cubic-bezier(0.23, 1, 0.32, 1) forwards;
 }
 
+[data-enter-seen] .playground-enter-item,
+[data-enter-seen] .playground-panel-section {
+  animation: none;
+  opacity: 1;
+  transform: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .playground-enter-item {
     animation: none;

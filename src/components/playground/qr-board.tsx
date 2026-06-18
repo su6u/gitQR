@@ -10,6 +10,7 @@ import {
   qrModuleIndex,
   qrRegionRect,
 } from "@/lib/qr-layout";
+import { isPlaygroundEnterReload } from "@/lib/playground-enter-seen";
 import {
   buildRevealSchedule,
   collectRevealIndices,
@@ -120,6 +121,16 @@ export function QrBoard({
       ? `grid:${layout.cols}x${layout.rows}:d${doodleFills.size}:g${gridGenerationRef.current}`
       : `empty:${layout.cols}x${layout.rows}:d${doodleFills.size}`;
     if (revealKey === lastCompletedRevealKeyRef.current) return;
+
+    if (isPlaygroundEnterReload() && !isRegenerate) {
+      setRevealing(false);
+      setRevealed(false);
+      setRevealDelays(new Map());
+      setRevealFinished(true);
+      revealingRef.current = false;
+      lastCompletedRevealKeyRef.current = revealKey;
+      return;
+    }
 
     setRevealed(false);
     if (!isRegenerate) {
