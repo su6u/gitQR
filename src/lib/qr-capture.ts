@@ -33,18 +33,34 @@ function renderModulesToCanvas(
   grid: StyledQrGrid,
   options: {
     size?: number;
+    /** Module layout span — defaults to `size`. */
+    layoutSize?: number;
+    offsetX?: number;
+    offsetY?: number;
     gap?: number;
     roundness?: number;
     fillForModule?: (mod: StyledQrGrid["modules"][number]) => string;
     background?: string;
+    /** When set with `pixelAlign`, skips fractional layout recompute. */
+    modulePx?: number;
+    moduleScale?: (mod: StyledQrGrid["modules"][number]) => number;
+    shouldDrawModule?: (mod: StyledQrGrid["modules"][number]) => boolean;
+    pixelAlign?: boolean;
   } = {},
 ): HTMLCanvasElement {
   const size = options.size ?? CAPTURE_SIZE_PX;
+  const layoutSize = options.layoutSize ?? size;
   const gap = options.gap ?? CAPTURE_GAP_PX;
   const roundness = options.roundness ?? CAPTURE_ROUNDNESS_PX;
   const background = options.background ?? "#ffffff";
+  const offsetX = options.offsetX ?? 0;
+  const offsetY = options.offsetY ?? 0;
+  const snap = (value: number) =>
+    options.pixelAlign ? Math.round(value) : value;
   const moduleCount = grid.size;
-  const modulePx = (size - gap * (moduleCount - 1)) / moduleCount;
+  const modulePx =
+    options.modulePx ??
+    (layoutSize - gap * (moduleCount - 1)) / moduleCount;
 
   const canvas = document.createElement("canvas");
   canvas.width = size;
@@ -55,18 +71,29 @@ function renderModulesToCanvas(
     throw new Error("Canvas 2D context unavailable");
   }
 
+  if (options.pixelAlign) {
+    ctx.imageSmoothingEnabled = false;
+  }
+
   ctx.fillStyle = background;
   ctx.fillRect(0, 0, size, size);
 
   for (const mod of grid.modules) {
-    const x = mod.col * (modulePx + gap);
-    const y = mod.row * (modulePx + gap);
+    if (options.shouldDrawModule && !options.shouldDrawModule(mod)) continue;
+
+    const scale = options.moduleScale?.(mod) ?? 1;
+    const drawPx = modulePx * scale;
+    const inset = (modulePx - drawPx) / 2;
+    const x = snap(offsetX + mod.col * (modulePx + gap) + inset);
+    const y = snap(offsetY + mod.row * (modulePx + gap) + inset);
+    const w = snap(drawPx);
     ctx.fillStyle = options.fillForModule?.(mod) ?? mod.fill;
 
-    if (roundness > 0) {
-      fillRoundRect(ctx, x, y, modulePx, modulePx, roundness);
+    const drawRoundness = Math.min(roundness * scale, drawPx / 2);
+    if (drawRoundness > 0) {
+      fillRoundRect(ctx, x, y, w, w, drawRoundness);
     } else {
-      ctx.fillRect(x, y, modulePx, modulePx);
+      ctx.fillRect(x, y, w, w);
     }
   }
 
@@ -124,8 +151,17 @@ export function renderQrCaptureCanvas(
   grid: StyledQrGrid,
   options: {
     size?: number;
+    layoutSize?: number;
+    offsetX?: number;
+    offsetY?: number;
     gap?: number;
     roundness?: number;
+    background?: string;
+    fillForModule?: (mod: StyledQrGrid["modules"][number]) => string;
+    modulePx?: number;
+    moduleScale?: (mod: StyledQrGrid["modules"][number]) => number;
+    shouldDrawModule?: (mod: StyledQrGrid["modules"][number]) => boolean;
+    pixelAlign?: boolean;
   } = {},
 ): HTMLCanvasElement {
   return renderModulesToCanvas(grid, options);

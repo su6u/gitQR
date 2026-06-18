@@ -5,6 +5,12 @@ export const PANEL_WIDTH_RATIO = 0.28;
 
 export const QR_BOARD_GAP_PX = 4;
 
+/** Matches `.qr-cell` `rounded-[5px]` on the playground board. */
+export const QR_BOARD_ROUNDNESS_PX = 5;
+
+/** Cell size the board targets at minimum — used to scale export corner radius. */
+export const QR_BOARD_REFERENCE_CELL_PX = 16;
+
 export const QR_SCAN_TARGET_PADDING_PX = 14;
 
 export interface QrRegionCells {
