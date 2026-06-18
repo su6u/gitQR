@@ -1,6 +1,6 @@
 "use client";
 
-import { boris } from "@/lib/fonts";
+import { caveat } from "@/lib/fonts";
 import { cn } from "@/lib/utils";
 import { GithubUrlField } from "./github-url-field";
 import { PlaygroundCustomization } from "./playground-customization";
@@ -10,12 +10,12 @@ export function PlaygroundPanel() {
   const { generate, loading, error } = usePlayground();
 
   return (
-    <div className="flex h-full min-h-0 flex-col px-5 pt-10 pb-4">
+    <div className="flex h-full min-h-0 flex-col px-5 pt-6 pb-4">
       <header className="playground-panel-section shrink-0 pb-4 text-center">
         <h2
           className={cn(
-            boris.className,
-            "text-[22px] font-bold text-foreground text-balance",
+            caveat.className,
+            "text-[28px] font-bold text-foreground text-balance",
           )}
         >
           GitQR PlayGround

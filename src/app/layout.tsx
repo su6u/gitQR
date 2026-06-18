@@ -3,7 +3,7 @@ import { Manrope } from "next/font/google";
 import "./globals.css";
 import { AgentationDev } from "@/components/agentation-dev";
 import { AppProviders } from "@/components/providers";
-import { boris } from "@/lib/fonts";
+import { boris, caveat } from "@/lib/fonts";
 import { cn } from "@/lib/utils";
 
 const manrope = Manrope({
@@ -29,6 +29,7 @@ export default function RootLayout({
         "light font-sans antialiased",
         manrope.variable,
         boris.variable,
+        caveat.variable,
       )}
       style={{ colorScheme: "light" }}
     >

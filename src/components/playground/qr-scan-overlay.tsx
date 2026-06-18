@@ -3,12 +3,46 @@
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { type RefObject, useEffect, useState } from "react";
 import { useQrBoardLayout } from "@/components/playground/qr-board";
-import { expandQrRegionRect } from "@/lib/qr-layout";
+import { expandQrRegionRect, PANEL_WIDTH_RATIO } from "@/lib/qr-layout";
 import { cn } from "@/lib/utils";
 import { usePlayground } from "./playground-provider";
 
 const SCAN_EASE_OUT = [0.23, 1, 0.32, 1] as const;
 const SCAN_EASE_IN = [0.55, 0, 1, 0.45] as const;
+const ARROW_INFO_SRC = "/images/arrow_info.svg";
+/** Matches public/images/arrow_info.svg viewBox="0 0 958 235". */
+const ARROW_INFO_ASPECT = 235 / 958;
+/** Hand-drawn arrow tip in SVG viewBox coordinates. */
+const ARROW_TIP_X_RATIO = 19 / 958;
+const ARROW_TIP_Y_RATIO = 234 / 235;
+
+function scanHintMetrics(
+  scanTarget: { x: number; y: number; width: number; height: number },
+  boardWidth: number,
+): { width: number; height: number; left: number; top: number } {
+  const leftCanvasWidth = boardWidth * (1 - PANEL_WIDTH_RATIO);
+  const width = Math.min(
+    leftCanvasWidth * 0.36,
+    Math.max(168, scanTarget.width * 0.38),
+  );
+  const height = width * ARROW_INFO_ASPECT;
+  // Restore tuned horizontal placement (center-based), then convert to tip anchor.
+  const hintCenterX =
+    scanTarget.x + scanTarget.width * 0.72 + leftCanvasWidth * 0.16;
+  const tipTargetX = hintCenterX + width * (ARROW_TIP_X_RATIO - 0.5);
+  const tipTargetY = scanTarget.y;
+  const left = tipTargetX - width * ARROW_TIP_X_RATIO;
+  const top = tipTargetY - height * ARROW_TIP_Y_RATIO;
+  const minLeft = 12;
+  const maxLeft = leftCanvasWidth - width - 12;
+
+  return {
+    width,
+    height,
+    left: Math.min(Math.max(left, minLeft), maxLeft),
+    top,
+  };
+}
 
 export function QrScanOverlay({
   boardAreaRef,
@@ -16,7 +50,7 @@ export function QrScanOverlay({
   boardAreaRef: RefObject<HTMLElement | null>;
 }) {
   const { grid, scanMode, scanStatus, exitScanMode, scanQr } = usePlayground();
-  const { region } = useQrBoardLayout(boardAreaRef);
+  const { region, layout } = useQrBoardLayout(boardAreaRef);
   const reduceMotion = useReducedMotion();
   const [targetReady, setTargetReady] = useState(false);
 
@@ -47,6 +81,10 @@ export function QrScanOverlay({
 
   const canScan = Boolean(grid);
   const scanTarget = region && canScan ? expandQrRegionRect(region) : null;
+  const scanHint =
+    scanTarget && layout.width > 0
+      ? scanHintMetrics(scanTarget, layout.width)
+      : null;
   const isScanning = scanStatus === "scanning";
 
   const enterTransition = reduceMotion
@@ -70,6 +108,47 @@ export function QrScanOverlay({
         >
           {scanTarget ? (
             <>
+              {scanHint ? (
+                <motion.div
+                  className="pointer-events-none absolute"
+                  style={{
+                    left: scanHint.left,
+                    top: scanHint.top,
+                    width: scanHint.width,
+                    height: scanHint.height,
+                  }}
+                  initial={
+                    reduceMotion
+                      ? false
+                      : { opacity: 0, transform: "translateY(-6px)" }
+                  }
+                  animate={{ opacity: 1, transform: "translateY(0)" }}
+                  exit={
+                    reduceMotion
+                      ? { opacity: 0 }
+                      : {
+                          opacity: 0,
+                          transform: "translateY(-4px)",
+                          transition: exitTransition,
+                        }
+                  }
+                  transition={{
+                    ...enterTransition,
+                    delay: reduceMotion ? 0 : 0.12,
+                  }}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={ARROW_INFO_SRC}
+                    alt=""
+                    aria-hidden
+                    className="block h-full w-full select-none"
+                    draggable={false}
+                  />
+                  <span className="sr-only">Click the QR code to scan</span>
+                </motion.div>
+              ) : null}
+
               <motion.div
                 className="qr-scan-spotlight pointer-events-none absolute rounded-xl"
                 style={{
