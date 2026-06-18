@@ -4,13 +4,18 @@ import {
   createContext,
   useContext,
   useEffect,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
 import * as TooltipPrimitive from "@radix-ui/react-tooltip";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { spring } from "@/lib/springs";
+import {
+  markTooltipHidden,
+  tooltipShouldInstant,
+} from "@/lib/tooltip-session";
 import { fontWeights } from "@/lib/font-weight";
 import { useShape } from "@/lib/shape-context";
 
@@ -57,16 +62,16 @@ interface TooltipProps {
 // Animation helpers
 // ---------------------------------------------------------------------------
 
-function getSlideOffset(side: TooltipSide) {
+function getSlideTransform(side: TooltipSide, px: number) {
   switch (side) {
     case "top":
-      return { y: 4 };
+      return `translateY(${px}px)`;
     case "bottom":
-      return { y: -4 };
+      return `translateY(${-px}px)`;
     case "left":
-      return { x: 4 };
+      return `translateX(${px}px)`;
     case "right":
-      return { x: -4 };
+      return `translateX(${-px}px)`;
   }
 }
 
@@ -87,6 +92,9 @@ function Tooltip({
   const [internalOpen, setInternalOpen] = useState(false);
   const open = forceOpen !== undefined ? forceOpen : internalOpen;
   const [mounted, setMounted] = useState(false);
+  const [delayMs, setDelayMs] = useState(delayDuration);
+  const instantOpenRef = useRef(false);
+  const reduceMotion = useReducedMotion();
   const shape = useShape();
   const portalContainer = useContext(TooltipPortalContainerContext);
 
@@ -98,11 +106,30 @@ function Tooltip({
     if (!open) setMounted(false);
   };
 
-  const slideOffset = getSlideOffset(side);
+  const slidePx = reduceMotion ? 0 : 4;
+  const motionTransition = reduceMotion
+    ? { duration: 0 }
+    : instantOpenRef.current
+      ? { duration: 0 }
+      : open
+        ? spring.fast
+        : spring.fast.exit;
 
   return (
-    <TooltipPrimitive.Provider delayDuration={delayDuration}>
-      <TooltipPrimitive.Root open={open} onOpenChange={(v) => { setInternalOpen(v); onOpenChangeProp?.(v); }}>
+    <TooltipPrimitive.Provider delayDuration={delayMs} skipDelayDuration={300}>
+      <TooltipPrimitive.Root
+        open={open}
+        onOpenChange={(v) => {
+          if (v) {
+            instantOpenRef.current = tooltipShouldInstant();
+            setDelayMs(instantOpenRef.current ? 0 : delayDuration);
+          } else {
+            markTooltipHidden();
+          }
+          setInternalOpen(v);
+          onOpenChangeProp?.(v);
+        }}
+      >
         <TooltipPrimitive.Trigger>
           {children}
         </TooltipPrimitive.Trigger>
@@ -121,13 +148,15 @@ function Tooltip({
                   className
                 )}
                 style={{ fontVariationSettings: fontWeights.medium }}
-                initial={{ opacity: 0, ...slideOffset }}
+                initial={{
+                  opacity: 0,
+                  transform: getSlideTransform(side, slidePx),
+                }}
                 animate={{
                   opacity: open ? 1 : 0,
-                  x: 0,
-                  y: 0,
+                  transform: "translate(0, 0)",
                 }}
-                transition={open ? spring.fast : spring.fast.exit}
+                transition={motionTransition}
                 onAnimationComplete={handleExitComplete}
               >
                 {content}
