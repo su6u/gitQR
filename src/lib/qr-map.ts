@@ -6,6 +6,7 @@ import {
 } from "@/lib/contributions";
 import { QR_MODULE_COUNT } from "@/lib/qr";
 import { encodeQrMatrix, type QrBitMatrix } from "@/lib/qr-generate";
+import { darkFillForLevel, relativeLuminance } from "@/lib/qr-palette";
 
 export interface StyledQrModule {
   row: number;
@@ -21,7 +22,46 @@ export interface StyledQrGrid {
   url: string;
 }
 
-const MIN_DARK_FILL = GITHUB_CONTRIBUTION_COLORS[2];
+/** Lower = darker dark-modules on average → better for camera decoders. */
+export function styledGridCameraScore(grid: StyledQrGrid): number {
+  let score = 0;
+  for (const mod of grid.modules) {
+    if (!mod.isDark) continue;
+    const lum = relativeLuminance(mod.fill);
+    score += lum;
+    if (lum > 0.55) score += 5;
+  }
+  return score;
+}
+
+async function pickBestMaskMatrix(
+  url: string,
+  contributions: ContributionGrid,
+  options: { background?: string } = {},
+): Promise<QrBitMatrix> {
+  let bestMatrix: QrBitMatrix | null = null;
+  let bestScore = Number.POSITIVE_INFINITY;
+
+  for (let mask = 0; mask < 8; mask++) {
+    const matrix = await encodeQrMatrix(url, { maskPattern: mask });
+    const modules = mapQrToContributions(matrix, contributions, options);
+    const score = styledGridCameraScore({
+      size: matrix.size,
+      modules,
+      url,
+    });
+    if (score < bestScore) {
+      bestScore = score;
+      bestMatrix = matrix;
+    }
+  }
+
+  if (!bestMatrix) {
+    throw new Error("Failed to pick QR mask");
+  }
+
+  return bestMatrix;
+}
 
 function moduleFill(
   isDark: boolean,
@@ -29,8 +69,7 @@ function moduleFill(
   background: string,
 ): string {
   if (!isDark) return background;
-  if (contribution.level === 0) return MIN_DARK_FILL;
-  return contribution.color;
+  return darkFillForLevel(contribution.level, contribution.color);
 }
 
 export function mapQrToContributions(
@@ -70,7 +109,7 @@ export async function buildStyledQrGrid(
   contributions: ContributionGrid,
   options: { background?: string } = {},
 ): Promise<StyledQrGrid> {
-  const matrix = await encodeQrMatrix(url);
+  const matrix = await pickBestMaskMatrix(url, contributions, options);
   if (matrix.size !== QR_MODULE_COUNT) {
     throw new Error(
       `Expected QR version 4 (${QR_MODULE_COUNT} modules), got ${matrix.size}`,

@@ -1,4 +1,4 @@
-import QRCode from "qrcode";
+import QRCode, { type QRCodeMaskPattern } from "qrcode";
 import { QR_MODULE_COUNT } from "@/lib/qr";
 
 export interface QrBitMatrix {
@@ -8,10 +8,16 @@ export interface QrBitMatrix {
 }
 
 /** Encode a URL into a version-4, level-H QR bit matrix (33×33 modules). */
-export async function encodeQrMatrix(url: string): Promise<QrBitMatrix> {
+export async function encodeQrMatrix(
+  url: string,
+  options: { maskPattern?: number } = {},
+): Promise<QrBitMatrix> {
   const qr = QRCode.create(url, {
     errorCorrectionLevel: "H",
     version: QR_MODULE_COUNT === 33 ? 4 : undefined,
+    ...(options.maskPattern !== undefined
+      ? { maskPattern: options.maskPattern as QRCodeMaskPattern }
+      : {}),
   });
 
   const size = qr.modules.size;
