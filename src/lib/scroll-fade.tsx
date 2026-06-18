@@ -177,7 +177,7 @@ export function ScrollEdgeCue({
           position: "absolute",
           opacity: visible ? 1 : 0,
           // Exit slightly faster than enter, per the animation guidelines.
-          transition: `opacity ${visible ? 160 : 120}ms ease`,
+          transition: `opacity ${visible ? 160 : 120}ms cubic-bezier(0.23, 1, 0.32, 1)`,
           ...(mode === "sticky"
             ? vertical
               ? { left: -inset, right: -inset, [edge]: -inset, height: sizePx }

@@ -135,7 +135,7 @@ const MenuItem = forwardRef<HTMLDivElement, MenuItemProps>(
                 }}
                 exit={{
                   pathLength: 0,
-                  transition: { duration: 0.04, ease: "easeIn" },
+                  transition: { duration: 0.04, ease: "easeOut" },
                 }}
               />
             </motion.svg>

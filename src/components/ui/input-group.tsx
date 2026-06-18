@@ -209,11 +209,17 @@ const InputField = forwardRef<HTMLLabelElement, InputFieldProps>(
           </span>
           <span
             className={cn(
-              "col-start-1 row-start-1",
-              error ? "text-destructive" : "text-muted-foreground",
+              "col-start-1 row-start-1 transition-[color,font-variation-settings] duration-80",
+              error
+                ? "text-destructive"
+                : labelActive
+                  ? "text-foreground"
+                  : "text-muted-foreground",
             )}
             style={{
-              fontVariationSettings: fontWeights.normal,
+              fontVariationSettings: labelActive
+                ? fontWeights.semibold
+                : fontWeights.normal,
             }}
           >
             {label}
@@ -223,7 +229,7 @@ const InputField = forwardRef<HTMLLabelElement, InputFieldProps>(
         {/* Input container */}
         <div
           className={cn(
-            `flex items-center gap-1.5 ${shape.input} ring-1 transition-all duration-80`,
+            `flex items-center gap-1.5 ${shape.input} ring-1 transition-[background-color,box-shadow,color] duration-80 ease-[cubic-bezier(0.23,1,0.32,1)]`,
             compact ? "px-2 py-1" : "gap-2 px-3 py-2",
             bgClass,
             ringClass,
@@ -234,7 +240,7 @@ const InputField = forwardRef<HTMLLabelElement, InputFieldProps>(
               size={compact ? 14 : 16}
               strokeWidth={labelActive ? 2 : 1.5}
               className={cn(
-                "shrink-0 transition-[color,stroke-width] duration-80",
+                "shrink-0 transition-[color,stroke-width] duration-80 ease-[cubic-bezier(0.23,1,0.32,1)]",
                 labelActive ? "text-foreground" : "text-muted-foreground",
               )}
             />
