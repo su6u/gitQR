@@ -1,7 +1,7 @@
 "use client";
 
 import { Link2 } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { InputField, InputGroup } from "@/components/ui/input-group";
 import { validateGithubUrl } from "@/lib/github-url";
@@ -16,12 +16,6 @@ export function GithubUrlField({
   const [value, setValue] = useState("");
   const [error, setError] = useState<string | undefined>();
   const [touched, setTouched] = useState(false);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
   const runValidation = useCallback((input: string) => {
     const trimmed = input.trim();
     if (!trimmed) {
@@ -101,7 +95,7 @@ export function GithubUrlField({
             variant="primary"
             size="sm"
             className="h-7 shrink-0 px-3 text-[12px] text-foreground [&_span]:bg-brand [&_span]:group-hover:bg-brand-hover [&_span]:group-active:bg-brand-hover"
-            disabled={!mounted || !value.trim() || loading}
+            disabled={!value.trim() || loading}
             onClick={handleSubmit}
           >
             {loading ? "…" : "enter"}

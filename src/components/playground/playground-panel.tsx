@@ -22,10 +22,7 @@ export function PlaygroundPanel() {
         </h2>
       </header>
       <div className="mt-6 flex min-h-0 flex-1 flex-col gap-4">
-        <div
-          className="playground-panel-section shrink-0"
-          style={{ animationDelay: "80ms" }}
-        >
+        <div className="shrink-0">
           <GithubUrlField onSubmit={generate} loading={loading} />
           {error ? (
             <p className="mt-2 text-[12px] text-destructive" role="alert">
