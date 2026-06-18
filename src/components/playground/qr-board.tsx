@@ -46,6 +46,7 @@ export function QrBoard({
   const prevGridRef = useRef<typeof styledGrid>(null);
   const gridGenerationRef = useRef(0);
   const lastCompletedRevealKeyRef = useRef<string | null>(null);
+  const revealingRef = useRef(false);
   const [layout, setLayout] = useState({ cols: 0, rows: 0 });
   const [revealing, setRevealing] = useState(false);
   const [revealed, setRevealed] = useState(false);
@@ -111,6 +112,7 @@ export function QrBoard({
       setRevealed(false);
       setRevealDelays(new Map());
       setRevealFinished(true);
+      revealingRef.current = false;
       return;
     }
 
@@ -125,6 +127,12 @@ export function QrBoard({
     }
     setRevealDelays(buildRevealSchedule(revealIndices));
     setRevealing(true);
+    revealingRef.current = true;
+
+    const gridEl = gridRef.current;
+    if (gridEl) {
+      delete gridEl.dataset.magnet;
+    }
 
     const startReveal = window.requestAnimationFrame(() => {
       window.requestAnimationFrame(() => setRevealed(true));
@@ -133,12 +141,14 @@ export function QrBoard({
       setRevealing(false);
       setRevealed(false);
       setRevealFinished(true);
+      revealingRef.current = false;
       lastCompletedRevealKeyRef.current = revealKey;
     }, QR_REVEAL_TOTAL_MS);
 
     return () => {
       window.cancelAnimationFrame(startReveal);
       window.clearTimeout(timer);
+      revealingRef.current = false;
     };
   }, [styledGrid, layout.cols, layout.rows, doodleFills]);
 
@@ -285,7 +295,7 @@ export function QrBoard({
     };
 
     const startMagnet = () => {
-      if (magnetActive) return;
+      if (magnetActive || revealingRef.current) return;
       magnetActive = true;
       delete gridEl.dataset.magnet;
       gridEl.dataset.magnet = "active";

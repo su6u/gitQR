@@ -439,8 +439,20 @@
       transition: none;
     }
 
+    .qr-grid[data-magnet="active"] .qr-cell--reveal {
+      transition: background-color var(--qr-reveal-dur) var(--qr-ease-enter)
+        var(--qr-reveal-delay, 0ms);
+    }
+
     .qr-grid[data-magnet="settling"] .qr-cell {
       transition: transform var(--qr-dur) var(--qr-ease-out);
+    }
+
+    .qr-grid[data-magnet="settling"] .qr-cell--reveal {
+      transition:
+        transform var(--qr-dur) var(--qr-ease-out),
+        background-color var(--qr-reveal-dur) var(--qr-ease-enter)
+          var(--qr-reveal-delay, 0ms);
     }
   }
 
