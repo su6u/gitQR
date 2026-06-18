@@ -377,6 +377,26 @@
   background-color: var(--playground-control);
 }
 
+.playground-nav-pill {
+  @apply bg-playground-surface ring-1 ring-black/[0.08] shadow-[0_1px_2px_rgba(0,0,0,0.03),0_6px_20px_rgba(0,0,0,0.05)] transition-colors duration-80;
+}
+
+.playground-nav-pill:hover {
+  @apply bg-playground-control;
+}
+
+.playground-nav-pill:active {
+  @apply bg-playground-track;
+}
+
+.playground-nav-pill:focus-visible {
+  @apply ring-1 ring-brand;
+}
+
+.playground-nav-pill[data-scan-active="true"] {
+  @apply bg-playground-track ring-scan-accent/30;
+}
+
 /* QR board — repulsive field: JS lerp while active, CSS snap-back on leave */
 @layer components {
   .qr-grid {

@@ -10,7 +10,7 @@ import { usePlayground } from "./playground-provider";
 const GITHUB_REPO_URL = "https://github.com/su6u/git-qr";
 
 const navLinkClass =
-  "inline-flex h-9 items-center gap-1.5 rounded-[20px] px-4 text-[13px] text-foreground outline-none transition-colors duration-80 bg-playground-surface ring-1 ring-black/[0.08] shadow-[0_1px_2px_rgba(0,0,0,0.03),0_6px_20px_rgba(0,0,0,0.05)] hover:bg-playground-control active:bg-playground-track focus-visible:ring-1 focus-visible:ring-brand";
+  "playground-nav-pill inline-flex h-9 items-center gap-1.5 rounded-[20px] px-4 text-[13px] text-foreground outline-none";
 
 export function PlaygroundNavbar({
   className,
@@ -42,10 +42,8 @@ export function PlaygroundNavbar({
       </button>
       <button
         type="button"
-        className={cn(
-          navLinkClass,
-          scanMode && "bg-playground-track ring-scan-accent/30",
-        )}
+        className={navLinkClass}
+        data-scan-active={scanMode ? "true" : undefined}
         aria-pressed={scanMode}
         aria-label={scanMode ? "Exit scan mode" : "Enter scan mode"}
         onClick={toggleScanMode}
