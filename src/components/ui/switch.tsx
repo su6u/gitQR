@@ -18,6 +18,7 @@ interface SwitchProps extends HTMLAttributes<HTMLDivElement> {
   checked: boolean;
   onToggle: () => void;
   disabled?: boolean;
+  thumbClassName?: string;
 }
 
 const TRACK_WIDTH = 34;
@@ -31,7 +32,7 @@ const PRESS_SHRINK = 4;
 const DRAG_DEAD_ZONE = 2;
 
 const Switch = forwardRef<HTMLDivElement, SwitchProps>(
-  ({ label, checked, onToggle, disabled = false, className, ...props }, ref) => {
+  ({ label, checked, onToggle, disabled = false, thumbClassName, className, ...props }, ref) => {
     const hasMounted = useRef(false);
     const prevCheckedRef = useRef(checked);
     const checkedViaKeyboardRef = useRef(false);
@@ -206,7 +207,7 @@ const Switch = forwardRef<HTMLDivElement, SwitchProps>(
             backgroundColor: checked
               ? hovered ? "var(--brand-hover)" : "var(--brand)"
               : hovered
-                ? "color-mix(in oklab, var(--accent), rgb(var(--overlay)) 10%)"
+                ? "color-mix(in oklab, var(--foreground) 7%, var(--accent))"
                 : "var(--accent)",
           }}
           onClick={(e) => e.stopPropagation()}
@@ -218,7 +219,10 @@ const Switch = forwardRef<HTMLDivElement, SwitchProps>(
               style={{ transform: thumbXTransform }}
             >
               <motion.span
-                className="block rounded-full bg-white shadow-sm"
+                className={cn(
+                  "block rounded-full bg-white shadow-sm",
+                  thumbClassName,
+                )}
                 initial={false}
                 animate={{
                   y: thumbY,
