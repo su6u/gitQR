@@ -107,6 +107,7 @@ interface ColorSwatchProps
   color: string;
   size?: number;
   selected?: boolean;
+  selectedRingColor?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -1225,11 +1226,11 @@ function ColorTile({ color, size = 24, className, style }: ColorTileProps) {
 // ---------------------------------------------------------------------------
 
 const ColorSwatch = forwardRef<HTMLButtonElement, ColorSwatchProps>(
-  ({ color, size = 28, selected, className, onMouseEnter, onMouseLeave, ...props }, ref) => {
+  ({ color, size = 28, selected, selectedRingColor = "var(--brand)", className, onMouseEnter, onMouseLeave, ...props }, ref) => {
     const shape = useShape();
     const [hovered, setHovered] = useState(false);
     const ring = selected
-      ? "inset 0 0 0 1px rgba(127,127,127,0.25), 0 0 0 2px var(--background), 0 0 0 4px var(--brand)"
+      ? `inset 0 0 0 1px rgba(127,127,127,0.25), 0 0 0 2px var(--background), 0 0 0 4px ${selectedRingColor}`
       : hovered
         ? "inset 0 0 0 1px rgba(127,127,127,0.25), 0 0 0 2px var(--background), 0 0 0 4px rgba(127,127,127,0.4)"
         : "inset 0 0 0 1px rgba(127,127,127,0.25)";
