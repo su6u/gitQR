@@ -8,7 +8,7 @@ import {
   useCallback,
   type HTMLAttributes,
 } from "react";
-import { motion, useMotionValue, animate } from "framer-motion";
+import { motion, useMotionValue, animate, useTransform } from "framer-motion";
 import * as SwitchPrimitive from "@radix-ui/react-switch";
 import { cn } from "@/lib/utils";
 import { spring } from "@/lib/springs";
@@ -33,6 +33,8 @@ const DRAG_DEAD_ZONE = 2;
 const Switch = forwardRef<HTMLDivElement, SwitchProps>(
   ({ label, checked, onToggle, disabled = false, className, ...props }, ref) => {
     const hasMounted = useRef(false);
+    const prevCheckedRef = useRef(checked);
+    const checkedViaKeyboardRef = useRef(false);
     const [hovered, setHovered] = useState(false);
     const [pressed, setPressed] = useState(false);
 
@@ -66,15 +68,23 @@ const Switch = forwardRef<HTMLDivElement, SwitchProps>(
       ? THUMB_OFFSET + THUMB_TRAVEL - extraWidth
       : THUMB_OFFSET;
 
+    const thumbXTransform = useTransform(motionX, (x) => `translateX(${x}px)`);
+
     // Sync motionX when thumbX changes (hover/press/checked) and not dragging
     useEffect(() => {
       if (dragging.current) return;
+      const checkedChanged = prevCheckedRef.current !== checked;
+      prevCheckedRef.current = checked;
+
       if (!hasMounted.current) {
         motionX.set(thumbX);
+      } else if (checkedChanged && checkedViaKeyboardRef.current) {
+        motionX.set(thumbX);
+        checkedViaKeyboardRef.current = false;
       } else {
         animate(motionX, thumbX, spring.moderate);
       }
-    }, [thumbX, motionX]);
+    }, [thumbX, motionX, checked]);
 
     // --- Pointer handlers ---
 
@@ -180,6 +190,11 @@ const Switch = forwardRef<HTMLDivElement, SwitchProps>(
           }}
           disabled={disabled}
           tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === " " || e.key === "Enter") {
+              checkedViaKeyboardRef.current = true;
+            }
+          }}
           className={cn(
             "relative shrink-0 rounded-full outline-none cursor-pointer",
             "transition-colors duration-80",
@@ -198,18 +213,23 @@ const Switch = forwardRef<HTMLDivElement, SwitchProps>(
         >
           <SwitchPrimitive.Thumb asChild>
             <motion.span
-              className="absolute top-0 left-0 block rounded-full bg-white shadow-sm"
+              className="absolute top-0 left-0 block"
               initial={false}
-              style={{ x: motionX }}
-              animate={{
-                y: thumbY,
-                width: thumbWidth,
-                height: thumbHeight,
-              }}
-              transition={
-                hasMounted.current ? spring.moderate : { duration: 0 }
-              }
-            />
+              style={{ transform: thumbXTransform }}
+            >
+              <motion.span
+                className="block rounded-full bg-white shadow-sm"
+                initial={false}
+                animate={{
+                  y: thumbY,
+                  width: thumbWidth,
+                  height: thumbHeight,
+                }}
+                transition={
+                  hasMounted.current ? spring.moderate : { duration: 0 }
+                }
+              />
+            </motion.span>
           </SwitchPrimitive.Thumb>
         </SwitchPrimitive.Root>
 
