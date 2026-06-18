@@ -1,7 +1,4 @@
-import {
-  type ContributionLevel,
-  GITHUB_CONTRIBUTION_COLORS,
-} from "@/lib/contributions";
+import type { ContributionLevel } from "@/lib/contributions";
 
 export function relativeLuminance(hex: string): number {
   const value = Number.parseInt(hex.replace("#", ""), 16);
@@ -16,11 +13,13 @@ export function relativeLuminance(hex: string): number {
   );
 }
 
-/** Classic GitHub greens: level 0 uses mid-green, others use contribution color. */
+const ZERO_DAY_DARK_FILL = "#6e7781";
+
+/** Level 0 is heatmap gray — on dark QR modules use light-medium gray for contrast. */
 export function darkFillForLevel(
   level: ContributionLevel,
   sourceColor: string,
 ): string {
-  if (level === 0) return GITHUB_CONTRIBUTION_COLORS[2];
+  if (level === 0) return ZERO_DAY_DARK_FILL;
   return sourceColor;
 }
