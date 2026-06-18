@@ -6,7 +6,7 @@ import { qrModuleIndex } from "@/lib/qr-layout";
 export const QR_REVEAL_START_COLOR = "#e3e3e3";
 
 /** How long each square takes gray → green. */
-export const QR_REVEAL_TRANSITION_MS = 320;
+export const QR_REVEAL_TRANSITION_MS = 280;
 
 /** Time from first square lighting to last square starting. */
 export const QR_REVEAL_SPREAD_MS = 5200;

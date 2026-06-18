@@ -338,13 +338,13 @@
 
 .playground-enter-item {
   opacity: 1;
-  animation: playground-enter 460ms cubic-bezier(0.23, 1, 0.32, 1) forwards;
+  animation: playground-enter 280ms cubic-bezier(0.23, 1, 0.32, 1) forwards;
 }
 
 .playground-panel-section {
   opacity: 0;
   transform: translateY(6px);
-  animation: playground-enter 420ms cubic-bezier(0.23, 1, 0.32, 1) forwards;
+  animation: playground-enter 260ms cubic-bezier(0.23, 1, 0.32, 1) forwards;
 }
 
 [data-enter-seen] .playground-enter-item,
@@ -411,10 +411,8 @@
   @apply bg-playground-track ring-scan-accent/30 shadow-[0_0_0_3px_color-mix(in_oklab,var(--scan-accent)_12%,transparent),0_1px_2px_rgba(0,0,0,0.03),0_6px_20px_rgba(0,0,0,0.05)];
 }
 
-@media (hover: hover) and (pointer: fine) {
-  .playground-nav-pill:active:not(:disabled) {
-    transform: scale(0.96);
-  }
+.playground-nav-pill:active:not(:disabled) {
+  transform: scale(0.96);
 }
 
 /* QR board — repulsive field: JS lerp while active, CSS snap-back on leave */
@@ -422,7 +420,7 @@
   .qr-grid {
     --qr-dur: 240ms;
     --qr-ease-out: cubic-bezier(0.34, 1.6, 0.64, 1);
-    --qr-reveal-dur: 320ms;
+    --qr-reveal-dur: 280ms;
     --qr-reveal-start: #e3e3e3;
     --qr-ease-enter: cubic-bezier(0.33, 1, 0.68, 1);
   }
