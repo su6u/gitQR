@@ -1,10 +1,9 @@
 "use client";
 
-import { type ReactNode, useState } from "react";
-import { Button } from "@/components/ui/button";
+import { type ReactNode, useCallback, useState } from "react";
+import { toast } from "sonner";
 import { DownloadIcon } from "@/components/icons/download-icon";
-import type { IconComponent } from "@/lib/icons";
-import { fontWeights } from "@/lib/font-weight";
+import { Button } from "@/components/ui/button";
 import { ColorPickerPopover, ColorSwatch } from "@/components/ui/color-picker";
 import {
   Select,
@@ -14,6 +13,16 @@ import {
 } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
+import { fontWeights } from "@/lib/font-weight";
+import type { IconComponent } from "@/lib/icons";
+import {
+  computeQrExportLayout,
+  downloadStyledQrGrid,
+  QR_EXPORT_SIZES,
+  type QrExportFormat,
+  type QrExportSize,
+} from "@/lib/qr-export";
+import { usePlayground } from "./playground-provider";
 
 const BACKGROUND_PRESETS = [
   { color: "#FFFFFF", label: "White" },
@@ -109,15 +118,41 @@ function PlaygroundSlider({
 }
 
 export function PlaygroundCustomization() {
+  const { grid } = usePlayground();
   const [moduleColor, setModuleColor] = useState(MODULE_DEFAULT);
   const [backgroundColor, setBackgroundColor] = useState(BACKGROUND_DEFAULT);
   const [roundness, setRoundness] = useState(4);
   const [gap, setGap] = useState(3);
   const [profileImage, setProfileImage] = useState(true);
   const [imageSize, setImageSize] = useState(36);
-  const [contributionLook, setContributionLook] = useState("classic");
-  const [exportSize, setExportSize] = useState("1024");
-  const [exportFormat, setExportFormat] = useState("png");
+  const [exportSize, setExportSize] = useState<QrExportSize>(1024);
+  const [exportFormat, setExportFormat] = useState<QrExportFormat>("png");
+  const [downloading, setDownloading] = useState(false);
+
+  const exportLayout = grid
+    ? computeQrExportLayout(grid.size, exportSize)
+    : null;
+
+  const handleDownload = useCallback(async () => {
+    if (!grid) {
+      toast.error("Generate a QR first", { icon: null });
+      return;
+    }
+
+    setDownloading(true);
+    try {
+      await downloadStyledQrGrid(grid, {
+        size: exportSize,
+        format: exportFormat,
+      });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Download failed", {
+        icon: null,
+      });
+    } finally {
+      setDownloading(false);
+    }
+  }, [grid, exportSize, exportFormat]);
 
   return (
     <div className="flex flex-col gap-5">
@@ -196,58 +231,50 @@ export function PlaygroundCustomization() {
           disabled={!profileImage}
         />
 
-        <PlaygroundRow label="Look">
-          <Select value={contributionLook} onValueChange={setContributionLook}>
-            <SelectTrigger className={SELECT_TRIGGER} placeholder="Look" />
+      </PlaygroundSection>
+
+      <PlaygroundSection title="Export">
+        <PlaygroundRow label="Size">
+          <Select
+            value={String(exportSize)}
+            onValueChange={(value) =>
+              setExportSize(Number(value) as QrExportSize)
+            }
+          >
+            <SelectTrigger className={SELECT_TRIGGER} placeholder="Size" />
             <SelectContent>
-              <SelectItem index={0} value="classic">
-                Classic
+              {QR_EXPORT_SIZES.map((size, index) => (
+                <SelectItem key={size} index={index} value={String(size)}>
+                  {size} px
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </PlaygroundRow>
+
+        <PlaygroundRow label="Format">
+          <Select
+            value={exportFormat}
+            onValueChange={(value) => setExportFormat(value as QrExportFormat)}
+          >
+            <SelectTrigger className={SELECT_TRIGGER} placeholder="Format" />
+            <SelectContent>
+              <SelectItem index={0} value="png">
+                PNG — raster
               </SelectItem>
-              <SelectItem index={1} value="mono">
-                Mono
-              </SelectItem>
-              <SelectItem index={2} value="custom">
-                Custom
+              <SelectItem index={1} value="svg">
+                SVG — vector
               </SelectItem>
             </SelectContent>
           </Select>
         </PlaygroundRow>
-      </PlaygroundSection>
 
-      <PlaygroundSection title="Export">
-        <div className="grid grid-cols-2 gap-3">
-          <div className="flex flex-col gap-1">
-            <span className="text-[12px] text-muted-foreground">Size</span>
-            <Select value={exportSize} onValueChange={setExportSize}>
-              <SelectTrigger className={SELECT_TRIGGER} placeholder="Size" />
-              <SelectContent>
-                <SelectItem index={0} value="512">
-                  512 px
-                </SelectItem>
-                <SelectItem index={1} value="1024">
-                  1024 px
-                </SelectItem>
-                <SelectItem index={2} value="2048">
-                  2048 px
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="flex flex-col gap-1">
-            <span className="text-[12px] text-muted-foreground">Format</span>
-            <Select value={exportFormat} onValueChange={setExportFormat}>
-              <SelectTrigger className={SELECT_TRIGGER} placeholder="Format" />
-              <SelectContent>
-                <SelectItem index={0} value="png">
-                  PNG
-                </SelectItem>
-                <SelectItem index={1} value="svg">
-                  SVG
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
+        {exportLayout && (
+          <p className="text-[11px] leading-snug text-muted-foreground">
+            {exportLayout.canvasSize}×{exportLayout.canvasSize} px canvas, QR
+            centered at {exportLayout.symbolSize}×{exportLayout.symbolSize} px.
+          </p>
+        )}
 
         <Button
           type="button"
@@ -256,8 +283,12 @@ export function PlaygroundCustomization() {
           className="mt-5 h-9 w-full rounded-full font-bold text-foreground focus-visible:ring-[#63E895]/40 [&_span]:rounded-full [&_span]:bg-[#63E895] [&_span]:transition-[background-color,transform] [&_span]:duration-80 [&_span]:group-hover:bg-[#52df88] [&_span]:group-active:bg-[#45d67c]"
           style={{ fontVariationSettings: fontWeights.bold }}
           leadingIcon={DownloadIcon as IconComponent}
+          disabled={downloading || !grid}
+          onClick={() => {
+            void handleDownload();
+          }}
         >
-          Download
+          {downloading ? "Downloading…" : "Download"}
         </Button>
       </PlaygroundSection>
     </div>
