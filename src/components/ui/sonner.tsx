@@ -2,11 +2,20 @@
 
 import { Toaster as Sonner, type ToasterProps } from "sonner";
 
+export const scanCopyToastClassNames = {
+  toast:
+    "scan-copy-toast bg-white flex w-max items-center justify-center rounded-full px-3.5 py-2 text-center",
+  title: "text-[12px] font-medium leading-none text-foreground text-center",
+  content: "flex items-center justify-center text-center",
+  icon: "hidden size-0",
+} as const;
+
 export function Toaster(props: ToasterProps) {
   return (
     <Sonner
       position="bottom-center"
       closeButton={false}
+      expand={false}
       toastOptions={{
         unstyled: true,
         classNames: {
@@ -23,7 +32,19 @@ export function Toaster(props: ToasterProps) {
   );
 }
 
-export const scanCopyToastClassNames = {
-  toast: "bg-[#63E895]",
-  title: "text-black",
-} as const;
+/** Scan copy toasts — positioned over the left QR canvas via .scan-copy-toaster */
+export function ScanCopyToaster() {
+  return (
+    <Sonner
+      id="scan-copy"
+      className="scan-copy-toaster"
+      position="bottom-center"
+      closeButton={false}
+      expand={false}
+      toastOptions={{
+        unstyled: true,
+        classNames: scanCopyToastClassNames,
+      }}
+    />
+  );
+}

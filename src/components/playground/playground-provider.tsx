@@ -17,6 +17,8 @@ import { githubUsernameFromUrl } from "@/lib/github-contributions";
 import { buildStyledQrGrid, type StyledQrGrid } from "@/lib/qr-map";
 import { decodeStyledQrGrid, preloadQrDecoders } from "@/lib/qr-decode";
 
+const SCAN_TOAST_MS = 3000;
+
 export type ScanStatus = "idle" | "scanning" | "success" | "error";
 
 interface PlaygroundContextValue {
@@ -63,21 +65,6 @@ async function loadStyledGrid(url: string): Promise<StyledQrGrid> {
   const username = githubUsernameFromUrl(url);
   const contributions = await fetchContributionGrid(username);
   return buildStyledQrGrid(url, contributions);
-}
-
-function copyTextDuringUserGesture(text: string) {
-  const textarea = document.createElement("textarea");
-  textarea.value = text;
-  textarea.setAttribute("readonly", "");
-  textarea.style.position = "fixed";
-  textarea.style.left = "-9999px";
-  document.body.appendChild(textarea);
-  textarea.select();
-  const copied = document.execCommand("copy");
-  document.body.removeChild(textarea);
-  if (!copied) {
-    throw new Error("Could not copy");
-  }
 }
 
 export function PlaygroundProvider({ children }: { children: ReactNode }) {
@@ -158,17 +145,22 @@ export function PlaygroundProvider({ children }: { children: ReactNode }) {
     try {
       const { url } = await decodeStyledQrGrid(grid);
 
-      try {
-        await navigator.clipboard.writeText(url);
-      } catch {
-        copyTextDuringUserGesture(url);
-      }
+      const link = document.createElement("a");
+      link.href = url;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      document.body.append(link);
+      link.click();
+      link.remove();
 
       setScanStatus("success");
-      toast.success(url, {
+      toast.success("scanned", {
         icon: null,
+        duration: SCAN_TOAST_MS,
+        toasterId: "scan-copy",
         classNames: scanCopyToastClassNames,
       });
+      window.setTimeout(() => setScanStatus("idle"), SCAN_TOAST_MS);
     } catch (err) {
       setScanStatus("error");
       toast.error(

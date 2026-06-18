@@ -215,7 +215,7 @@ export function QrScanOverlay({
                 whileTap={
                   isScanning || reduceMotion ? undefined : { scale: 0.96 }
                 }
-                aria-label="Scan QR code and copy URL"
+                aria-label="Scan QR code and open link"
                 disabled={isScanning}
                 onClick={() => {
                   if (isScanning) return;
