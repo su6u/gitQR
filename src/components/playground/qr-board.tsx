@@ -2,6 +2,7 @@
 
 import type { CSSProperties, RefObject } from "react";
 import { useLayoutEffect, useRef, useState } from "react";
+import { isFinderModule, isFinderModuleInCircle } from "@/lib/qr-finder";
 import {
   moduleCountForSpan,
   QR_BOARD_GAP_PX,
@@ -294,7 +295,14 @@ export function QrBoard({
               : null;
             const mod =
               qrIndex !== null ? styledGrid?.modules[qrIndex] : undefined;
-            const fill = mod?.fill ?? DEFAULT_FILL;
+            const isFinderOutsideCircle =
+              mod !== undefined &&
+              styledGrid != null &&
+              isFinderModule(mod.row, mod.col, styledGrid.size) &&
+              !isFinderModuleInCircle(mod.row, mod.col, styledGrid.size);
+            const fill = isFinderOutsideCircle
+              ? DEFAULT_FILL
+              : (mod?.fill ?? DEFAULT_FILL);
 
             return (
               <span
