@@ -135,7 +135,7 @@ function exportFilename(
 ): string {
   const username = grid.url.match(/github\.com\/([^/?#]+)/i)?.[1];
   const slug = username ?? "qr";
-  return `git-qr-${slug}-${exportSize}.${format}`;
+  return `GitQR-${slug}-${exportSize}.${format}`;
 }
 
 function triggerDownload(blob: Blob, filename: string) {

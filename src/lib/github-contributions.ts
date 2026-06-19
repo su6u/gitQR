@@ -132,7 +132,7 @@ export async function fetchContributionsScrape(
     {
       headers: {
         Accept: "text/html",
-        "User-Agent": "git-qr",
+        "User-Agent": "GitQR",
       },
       next: { revalidate: 3600 },
     },
