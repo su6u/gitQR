@@ -24,7 +24,11 @@ import {
   DEFAULT_PLAYGROUND_STYLE,
   type PlaygroundStyle,
 } from "@/lib/playground-style";
-import { buildStyledQrGrid, type StyledQrGrid } from "@/lib/qr-map";
+import {
+  buildStyledQrGrid,
+  recolorStyledGrid,
+  type StyledQrGrid,
+} from "@/lib/qr-map";
 import { decodeStyledQrGrid, preloadQrDecoders } from "@/lib/qr-decode";
 
 const SCAN_TOAST_MS = 3000;
@@ -89,16 +93,6 @@ async function loadStyledGrid(
   return { grid, contributions };
 }
 
-async function restyleGrid(
-  url: string,
-  contributions: ContributionGrid,
-  style: PlaygroundStyle,
-): Promise<StyledQrGrid> {
-  return buildStyledQrGrid(url, contributions, {
-    palette: contributionPaletteForId(style.paletteId),
-  });
-}
-
 export function PlaygroundProvider({ children }: { children: ReactNode }) {
   const [githubUrl, setGithubUrl] = useState<string | null>(null);
   const [grid, setGrid] = useState<StyledQrGrid | null>(null);
@@ -111,7 +105,6 @@ export function PlaygroundProvider({ children }: { children: ReactNode }) {
   const activeUrlRef = useRef<string | null>(null);
   const contributionsRef = useRef<ContributionGrid | null>(null);
   const styleRef = useRef(style);
-  const skipPaletteRestyleRef = useRef(true);
   styleRef.current = style;
 
   useEffect(() => {
@@ -126,7 +119,9 @@ export function PlaygroundProvider({ children }: { children: ReactNode }) {
         if (!cancelled && !hasUserSubmittedRef.current) {
           activeUrlRef.current = DEMO_GITHUB_URL;
           contributionsRef.current = contributions;
-          setGrid(styled);
+          setGrid((prev) =>
+            prev && prev.displayGeneration > 1 ? prev : styled,
+          );
         }
       } catch {
         // Demo unavailable — board stays empty until user submits.
@@ -137,31 +132,6 @@ export function PlaygroundProvider({ children }: { children: ReactNode }) {
       cancelled = true;
     };
   }, []);
-
-  useEffect(() => {
-    if (skipPaletteRestyleRef.current) {
-      skipPaletteRestyleRef.current = false;
-      return;
-    }
-
-    const url = activeUrlRef.current;
-    const contributions = contributionsRef.current;
-    if (!url || !contributions) return;
-
-    let cancelled = false;
-    void (async () => {
-      try {
-        const styled = await restyleGrid(url, contributions, style);
-        if (!cancelled) setGrid(styled);
-      } catch {
-        // Keep the previous grid if restyle fails.
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [style.paletteId]);
 
   const resetScanFeedback = useCallback(() => {
     setScanStatus("idle");
@@ -216,9 +186,11 @@ export function PlaygroundProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const setPaletteId = useCallback((paletteId: ContributionPaletteId) => {
-    setStyle((prev) =>
-      prev.paletteId === paletteId ? prev : { ...prev, paletteId },
-    );
+    if (styleRef.current.paletteId === paletteId) return;
+
+    const palette = contributionPaletteForId(paletteId);
+    setStyle((prev) => ({ ...prev, paletteId }));
+    setGrid((prev) => (prev ? recolorStyledGrid(prev, { palette }) : prev));
   }, []);
 
   const setShowUsername = useCallback((showUsername: boolean) => {

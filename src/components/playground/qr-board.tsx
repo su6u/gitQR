@@ -5,7 +5,7 @@ import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import { placeBoardDoodles } from "@/lib/qr-doodles";
 import { isFinderModule, isFinderModuleInCircle } from "@/lib/qr-finder";
 import {
-  moduleCountForSpan,
+  observeBoardLayout,
   QR_BOARD_GAP_PX,
   QR_BOARD_REFERENCE_CELL_PX,
   qrModuleIndex,
@@ -24,6 +24,7 @@ import { caveat } from "@/lib/fonts";
 import { isPlaygroundEnterReload } from "@/lib/playground-enter-seen";
 import {
   buildRevealSchedule,
+  collectQrDarkRevealIndices,
   collectRevealIndices,
   collectUsernameCutoutIndices,
   QR_REVEAL_TOTAL_MS,
@@ -32,6 +33,7 @@ import {
   USERNAME_CUTOUT_SPREAD_MS,
   USERNAME_TEXT_SPREAD_MS,
 } from "@/lib/qr-reveal";
+import { isPaletteRecolor, type StyledQrGrid } from "@/lib/qr-map";
 import { cn } from "@/lib/utils";
 import { usePlayground } from "./playground-provider";
 
@@ -53,6 +55,19 @@ type UsernameExitSnapshot = {
 function resetCell(cell: HTMLElement) {
   cell.style.setProperty("--qr-x", "0px");
   cell.style.setProperty("--qr-y", "0px");
+}
+
+function boardModuleFill(
+  grid: StyledQrGrid,
+  cellIndex: number,
+  rows: number,
+  cols: number,
+): string | null {
+  const row = Math.floor(cellIndex / cols);
+  const col = cellIndex % cols;
+  const qrIndex = qrModuleIndex(row, col, rows, cols);
+  if (qrIndex === null) return null;
+  return grid.modules[qrIndex]?.fill ?? null;
 }
 
 export function QrBoard({
@@ -77,6 +92,10 @@ export function QrBoard({
   const gridGenerationRef = useRef(0);
   const lastCompletedRevealKeyRef = useRef<string | null>(null);
   const revealingRef = useRef(false);
+  const paletteRecolorRef = useRef(false);
+  const paletteStartFillsRef = useRef<Map<number, string>>(new Map());
+  const settledGridRef = useRef<typeof styledGrid>(null);
+  const lastPaletteAnimatedGenRef = useRef(0);
   const [layout, setLayout] = useState({ cols: 0, rows: 0, width: 0, height: 0 });
   const [revealing, setRevealing] = useState(false);
   const [revealed, setRevealed] = useState(false);
@@ -84,6 +103,11 @@ export function QrBoard({
   const [revealDelays, setRevealDelays] = useState<Map<number, number>>(
     () => new Map(),
   );
+  const [paletteRecolorActive, setPaletteRecolorActive] = useState(false);
+  const [paletteRecolorLit, setPaletteRecolorLit] = useState(false);
+  const [paletteRecolorDelays, setPaletteRecolorDelays] = useState<
+    Map<number, number>
+  >(() => new Map());
   const [usernameCutoutDelays, setUsernameCutoutDelays] = useState<
     Map<number, number>
   >(() => new Map());
@@ -102,6 +126,12 @@ export function QrBoard({
   const prevShowUsernameRef = useRef(playgroundStyle.showUsername);
 
   const hasGeneratedGrid = Boolean(styledGrid?.modules.length);
+
+  const palettePending =
+    styledGrid !== null &&
+    settledGridRef.current !== null &&
+    styledGrid.displayGeneration > settledGridRef.current.displayGeneration &&
+    !paletteRecolorActive;
 
   const moduleRoundnessPx = useMemo(() => {
     if (layout.cols === 0 || layout.width === 0) {
@@ -256,15 +286,16 @@ export function QrBoard({
       setUsernameShowText(true);
       setUsernameTextLit(true);
       setUsernameCutoutLit(true);
-      setUsernameCutoutDelays(cutoutDelays);
+      setUsernameCutoutDelays(new Map());
       setUsernameTextDelays(textDelays);
       setUsernameRevealActive(true);
 
       const textExit = window.requestAnimationFrame(() => {
         window.requestAnimationFrame(() => setUsernameTextLit(false));
       });
-      const hideText = window.setTimeout(() => {
+      const startCutoutExit = window.setTimeout(() => {
         setUsernameShowText(false);
+        setUsernameCutoutDelays(cutoutDelays);
         window.requestAnimationFrame(() => {
           window.requestAnimationFrame(() => setUsernameCutoutLit(false));
         });
@@ -284,7 +315,7 @@ export function QrBoard({
 
       return () => {
         window.cancelAnimationFrame(textExit);
-        window.clearTimeout(hideText);
+        window.clearTimeout(startCutoutExit);
         window.clearTimeout(finish);
       };
     }
@@ -374,21 +405,7 @@ export function QrBoard({
   useLayoutEffect(() => {
     const el = containerRef.current;
     if (!el) return;
-
-    const update = () => {
-      const { width, height } = el.getBoundingClientRect();
-      setLayout({
-        cols: moduleCountForSpan(width),
-        rows: moduleCountForSpan(height),
-        width,
-        height,
-      });
-    };
-
-    update();
-    const observer = new ResizeObserver(update);
-    observer.observe(el);
-    return () => observer.disconnect();
+    return observeBoardLayout(el, setLayout);
   }, []);
 
   const moduleCountTotal = layout.cols * layout.rows;
@@ -405,15 +422,87 @@ export function QrBoard({
   useLayoutEffect(() => {
     if (layout.cols === 0 || layout.rows === 0) return;
 
-    const hadGrid = prevGridRef.current !== null;
-    const gridChanged = styledGrid !== prevGridRef.current;
+    const prevGrid = prevGridRef.current;
+    const hadGrid = prevGrid !== null;
+    const gridChanged = styledGrid !== prevGrid;
     const isRegenerate = hadGrid && gridChanged && styledGrid !== null;
+    const paletteRecolor =
+      styledGrid !== null &&
+      isPaletteRecolor(prevGrid, styledGrid);
 
     if (!styledGrid) {
       prevGridRef.current = null;
     } else if (gridChanged) {
       prevGridRef.current = styledGrid;
-      gridGenerationRef.current += 1;
+      if (!paletteRecolor) {
+        gridGenerationRef.current += 1;
+      }
+    }
+
+    // Palette swap: stagger old → new color on QR modules only (not doodles).
+    if (
+      paletteRecolor &&
+      prevGrid &&
+      gridChanged &&
+      styledGrid.displayGeneration > lastPaletteAnimatedGenRef.current
+    ) {
+      const indices = collectQrDarkRevealIndices(
+        styledGrid,
+        layout.rows,
+        layout.cols,
+      );
+      const changedIndices: number[] = [];
+      const startFills = new Map<number, string>();
+
+      for (const i of indices) {
+        const prevFill = boardModuleFill(prevGrid, i, layout.rows, layout.cols);
+        const nextFill = boardModuleFill(
+          styledGrid,
+          i,
+          layout.rows,
+          layout.cols,
+        );
+        if (
+          prevFill === null ||
+          nextFill === null ||
+          prevFill === nextFill
+        ) {
+          continue;
+        }
+        changedIndices.push(i);
+        startFills.set(i, prevFill);
+      }
+
+      if (changedIndices.length > 0) {
+        lastPaletteAnimatedGenRef.current = styledGrid.displayGeneration;
+        paletteStartFillsRef.current = startFills;
+        setPaletteRecolorDelays(buildRevealSchedule(changedIndices));
+        setPaletteRecolorLit(false);
+        setPaletteRecolorActive(true);
+        paletteRecolorRef.current = true;
+
+        const startPalette = window.requestAnimationFrame(() => {
+          window.requestAnimationFrame(() => setPaletteRecolorLit(true));
+        });
+        const paletteTimer = window.setTimeout(() => {
+          settledGridRef.current = styledGrid;
+          setPaletteRecolorActive(false);
+          setPaletteRecolorLit(false);
+          setPaletteRecolorDelays(new Map());
+          paletteStartFillsRef.current = new Map();
+          paletteRecolorRef.current = false;
+        }, QR_REVEAL_TOTAL_MS);
+
+        return () => {
+          window.cancelAnimationFrame(startPalette);
+          window.clearTimeout(paletteTimer);
+          paletteRecolorRef.current = false;
+        };
+      }
+
+      settledGridRef.current = styledGrid;
+      lastPaletteAnimatedGenRef.current = styledGrid.displayGeneration;
+      return;
     }
 
     const revealIndices = collectRevealIndices(
@@ -444,6 +533,7 @@ export function QrBoard({
       setRevealFinished(true);
       revealingRef.current = false;
       lastCompletedRevealKeyRef.current = revealKey;
+      settledGridRef.current = styledGrid;
       return;
     }
 
@@ -469,6 +559,7 @@ export function QrBoard({
       setRevealFinished(true);
       revealingRef.current = false;
       lastCompletedRevealKeyRef.current = revealKey;
+      settledGridRef.current = styledGrid;
     }, QR_REVEAL_TOTAL_MS);
 
     return () => {
@@ -691,7 +782,9 @@ export function QrBoard({
     };
 
     const startMagnet = () => {
-      if (magnetActive || revealingRef.current) return;
+      if (magnetActive || revealingRef.current || paletteRecolorRef.current) {
+        return;
+      }
       magnetActive = true;
       setMagnetState("active");
       rafId = requestAnimationFrame(tick);
@@ -753,6 +846,7 @@ export function QrBoard({
           ref={gridRef}
           className="qr-grid grid h-full w-full"
           data-reveal={revealing ? "" : undefined}
+          data-palette-recolor={paletteRecolorActive ? "" : undefined}
           data-username-reveal={
             usernameRevealActive || usernameExitActive ? "" : undefined
           }
@@ -775,8 +869,13 @@ export function QrBoard({
             const qrIndex = hasGeneratedGrid
               ? qrModuleIndex(row, col, layout.rows, layout.cols)
               : null;
+            const settledGrid = settledGridRef.current;
             const mod =
               qrIndex !== null ? styledGrid?.modules[qrIndex] : undefined;
+            const settledMod =
+              palettePending && settledGrid && qrIndex !== null
+                ? settledGrid.modules[qrIndex]
+                : mod;
             const isFinderOutsideCircle =
               mod !== undefined &&
               styledGrid != null &&
@@ -805,15 +904,24 @@ export function QrBoard({
               usernameVisible &&
               usernameRevealActive &&
               usernameCutoutDelays.has(i);
-            const usernameCutoutDone =
+            const showUsernameCutoutWhite =
               usernameVisible &&
               inUsernameCutout &&
               usernameCutoutLit &&
-              !usernameRevealActive;
-            const moduleFill = mod?.fill ?? doodleFill ?? DEFAULT_FILL;
+              !shouldUsernameReveal;
+            const moduleFill = settledMod?.fill ?? doodleFill ?? DEFAULT_FILL;
+            const targetFill = mod?.fill ?? moduleFill;
+            const shouldPaletteRecolor =
+              paletteRecolorActive &&
+              paletteRecolorDelays.has(i) &&
+              Boolean(mod?.isDark) &&
+              !isFinderOutsideCircle &&
+              !shouldUsernameReveal &&
+              !showUsernameCutoutWhite &&
+              doodleFill === undefined;
             const fill = isFinderOutsideCircle
               ? DEFAULT_FILL
-              : usernameCutoutDone
+              : showUsernameCutoutWhite
                 ? QR_USERNAME_CUTOUT_FILL
                 : moduleFill;
             const isAnimatedCell =
@@ -824,7 +932,8 @@ export function QrBoard({
               revealDelays.has(i) &&
               isAnimatedCell &&
               !isFinderOutsideCircle &&
-              !shouldUsernameReveal;
+              !shouldUsernameReveal &&
+              !shouldPaletteRecolor;
             const awaitReveal =
               isAnimatedCell && !revealFinished && !shouldReveal;
 
@@ -837,6 +946,10 @@ export function QrBoard({
                 }}
                 className={cn(
                   "qr-cell block min-h-0 min-w-0",
+                  shouldPaletteRecolor && "qr-cell--palette-recolor",
+                  shouldPaletteRecolor &&
+                    paletteRecolorLit &&
+                    "qr-cell--palette-lit",
                   shouldReveal && "qr-cell--reveal",
                   shouldReveal && revealed && "qr-cell--lit",
                   shouldUsernameReveal && "qr-cell--username-reveal",
@@ -846,10 +959,19 @@ export function QrBoard({
                 )}
                 style={{
                   borderRadius: `${moduleRoundnessPx}px`,
-                  ...(shouldReveal
+                  ...(shouldPaletteRecolor
+                    ? {
+                        "--qr-start-fill":
+                          paletteStartFillsRef.current.get(i) ?? moduleFill,
+                        "--qr-target-fill": targetFill,
+                        "--qr-reveal-delay": `${paletteRecolorDelays.get(i) ?? 0}ms`,
+                        backgroundColor: undefined,
+                      }
+                    : shouldReveal
                     ? {
                         "--qr-target-fill": fill,
                         "--qr-reveal-delay": `${revealDelays.get(i) ?? 0}ms`,
+                        backgroundColor: undefined,
                       }
                     : shouldUsernameReveal
                       ? {
@@ -883,7 +1005,6 @@ export function QrBoard({
             height: (usernameCutout ?? usernameExitSnapshot!.cutout).height,
             fontSize: (usernameCutout ?? usernameExitSnapshot!.cutout).fontSize,
             borderRadius: (usernameCutout ?? usernameExitSnapshot!.cutout).radius,
-            backgroundColor: QR_USERNAME_CUTOUT_FILL,
           }}
         >
           {(usernameLabel
@@ -937,21 +1058,7 @@ export function useQrBoardLayout(containerRef: RefObject<HTMLElement | null>) {
   useLayoutEffect(() => {
     const el = containerRef.current;
     if (!el) return;
-
-    const update = () => {
-      const { width, height } = el.getBoundingClientRect();
-      setLayout({
-        width,
-        height,
-        cols: moduleCountForSpan(width),
-        rows: moduleCountForSpan(height),
-      });
-    };
-
-    update();
-    const observer = new ResizeObserver(update);
-    observer.observe(el);
-    return () => observer.disconnect();
+    return observeBoardLayout(el, setLayout);
   }, [containerRef]);
 
   const region =

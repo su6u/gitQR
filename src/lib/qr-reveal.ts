@@ -23,6 +23,33 @@ function shuffle<T>(items: T[]): T[] {
   return out;
 }
 
+export function collectQrDarkRevealIndices(
+  styledGrid: StyledQrGrid,
+  rows: number,
+  cols: number,
+): number[] {
+  const indices: number[] = [];
+  const total = rows * cols;
+
+  for (let i = 0; i < total; i++) {
+    const row = Math.floor(i / cols);
+    const col = i % cols;
+    const qrIndex = qrModuleIndex(row, col, rows, cols);
+    if (qrIndex === null) continue;
+    const mod = styledGrid.modules[qrIndex];
+    if (!mod?.isDark) continue;
+    if (
+      isFinderModule(mod.row, mod.col, styledGrid.size) &&
+      !isFinderModuleInCircle(mod.row, mod.col, styledGrid.size)
+    ) {
+      continue;
+    }
+    indices.push(i);
+  }
+
+  return indices;
+}
+
 /** Doodle cells + QR dark modules (never finder corners outside the circle). */
 export function collectRevealIndices(
   styledGrid: StyledQrGrid | null,
@@ -115,6 +142,31 @@ if (import.meta.main) {
   ]);
   const indices = collectRevealIndices(null, 10, 10, doodles);
   console.assert(indices.length === 2 && indices.includes(0) && indices.includes(5));
+
+  const darkOnly = collectQrDarkRevealIndices(
+    {
+      size: 33,
+      url: "https://x",
+      displayGeneration: 1,
+      modules: [
+        {
+          row: 0,
+          col: 0,
+          isDark: true,
+          fill: "#0f0",
+          contribution: {
+            date: "",
+            count: 1,
+            level: 1,
+            color: "#0f0",
+          },
+        },
+      ],
+    },
+    10,
+    10,
+  );
+  console.assert(darkOnly.length >= 0);
 
   const schedule = buildRevealSchedule([1, 2, 3], 300);
   const reversed = reverseRevealSchedule(schedule);

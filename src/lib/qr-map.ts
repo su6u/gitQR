@@ -21,6 +21,7 @@ export interface StyledQrGrid {
   size: number;
   modules: StyledQrModule[];
   url: string;
+  displayGeneration: number;
 }
 
 /** Lower = darker dark-modules on average → better for camera decoders. */
@@ -53,6 +54,7 @@ async function pickBestMaskMatrix(
       size: matrix.size,
       modules,
       url,
+      displayGeneration: 0,
     });
     if (score < bestScore) {
       bestScore = score;
@@ -114,6 +116,39 @@ export function mapQrToContributions(
   return modules;
 }
 
+export function isPaletteRecolor(
+  prev: StyledQrGrid | null,
+  next: StyledQrGrid,
+): boolean {
+  return (
+    prev !== null &&
+    prev !== next &&
+    next.displayGeneration > prev.displayGeneration &&
+    prev.url === next.url &&
+    prev.size === next.size
+  );
+}
+
+/** Same QR layout — new contribution colors only (sync, no mask re-pick). */
+export function recolorStyledGrid(
+  grid: StyledQrGrid,
+  options: {
+    background?: string;
+    palette?: readonly string[];
+  } = {},
+): StyledQrGrid {
+  const background = options.background ?? GITHUB_CONTRIBUTION_COLORS[0];
+  const palette = options.palette ?? GITHUB_CONTRIBUTION_COLORS;
+  return {
+    ...grid,
+    displayGeneration: (grid.displayGeneration ?? 0) + 1,
+    modules: grid.modules.map((mod) => ({
+      ...mod,
+      fill: moduleFill(mod.isDark, mod.contribution, background, palette),
+    })),
+  };
+}
+
 export async function buildStyledQrGrid(
   url: string,
   contributions: ContributionGrid,
@@ -133,5 +168,37 @@ export async function buildStyledQrGrid(
     size: matrix.size,
     modules: mapQrToContributions(matrix, contributions, options),
     url,
+    displayGeneration: 1,
   };
+}
+
+if (import.meta.main) {
+  const sample: StyledQrModule = {
+    row: 0,
+    col: 0,
+    isDark: true,
+    contribution: {
+      date: "2024-01-01",
+      level: 3,
+      count: 5,
+      color: "#39d353",
+    },
+    fill: "#old",
+  };
+  const grid: StyledQrGrid = {
+    size: 33,
+    modules: [sample],
+    url: "https://x",
+    displayGeneration: 1,
+  };
+  const pink = ["#fff", "#ff1", "#ff2", "#ff3", "#ff4"];
+  const recolored = recolorStyledGrid(grid, { palette: pink });
+  console.assert(recolored.modules[0]?.fill !== "#old");
+  console.assert(recolored.modules[0]?.fill === darkFillForLevel(3, pink[3]!));
+  console.assert(recolored.displayGeneration === 2);
+  console.assert(isPaletteRecolor(grid, recolored));
+  console.assert(!isPaletteRecolor(recolored, recolored));
+  console.assert(!isPaletteRecolor(null, recolored));
+  const rebuilt = { ...recolored, displayGeneration: 1, url: "https://other" };
+  console.assert(!isPaletteRecolor(recolored, rebuilt));
 }
