@@ -213,7 +213,9 @@ export function QrScanOverlay({
                   delay: reduceMotion ? 0 : 0.04,
                 }}
                 whileTap={
-                  isScanning || reduceMotion ? undefined : { scale: 0.96 }
+                  isScanning || reduceMotion
+                    ? undefined
+                    : { transform: "scale(0.96)" }
                 }
                 aria-label="Scan QR code and open link"
                 disabled={isScanning}

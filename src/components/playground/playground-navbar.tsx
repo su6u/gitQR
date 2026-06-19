@@ -1,6 +1,6 @@
 "use client";
 
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import type { CSSProperties } from "react";
 import { GithubIcon } from "@/components/icons/github-icon";
 import { QuestionMarkIcon } from "@/components/icons/question-mark-icon";
@@ -13,7 +13,7 @@ import { usePlayground } from "./playground-provider";
 const GITHUB_REPO_URL = "https://github.com/su6u/git-qr";
 
 const navLinkClass =
-  "relative z-10 inline-flex h-9 w-full items-center gap-1.5 rounded-[20px] px-4 text-[13px] text-foreground outline-none bg-transparent transition-transform duration-150 [@media(hover:hover)_and_(pointer:fine)]:hover:text-foreground [&_svg]:stroke-current";
+  "relative z-10 inline-flex h-9 w-full min-h-9 items-center gap-1.5 rounded-[20px] px-4 text-[13px] text-foreground outline-none bg-transparent [@media(hover:hover)_and_(pointer:fine)]:hover:text-foreground [&_svg]:stroke-current";
 
 const navLinkStyle = {
   fontVariationSettings: fontWeights.semibold,
@@ -27,6 +27,8 @@ const iconEnter = { duration: 0.12, ease: EASE_OUT };
 const iconExit = { duration: 0.08, ease: EASE_OUT };
 
 function ScanModeIcon({ scanMode }: { scanMode: boolean }) {
+  const reduceMotion = useReducedMotion();
+
   return (
     <span className="relative inline-flex size-4 shrink-0 items-center justify-center">
       <AnimatePresence initial={false} mode="popLayout">
@@ -34,10 +36,26 @@ function ScanModeIcon({ scanMode }: { scanMode: boolean }) {
           <motion.span
             key="exit-icon"
             className="absolute inset-0 flex items-center justify-center"
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.97, transition: iconExit }}
-            transition={iconEnter}
+            initial={
+              reduceMotion
+                ? { opacity: 0 }
+                : { opacity: 0, transform: "scale(0.95)" }
+            }
+            animate={
+              reduceMotion
+                ? { opacity: 1 }
+                : { opacity: 1, transform: "scale(1)" }
+            }
+            exit={
+              reduceMotion
+                ? { opacity: 0, transition: iconExit }
+                : {
+                    opacity: 0,
+                    transform: "scale(0.97)",
+                    transition: iconExit,
+                  }
+            }
+            transition={reduceMotion ? { duration: 0.08 } : iconEnter}
           >
             <XIcon size={16} />
           </motion.span>
@@ -45,10 +63,26 @@ function ScanModeIcon({ scanMode }: { scanMode: boolean }) {
           <motion.span
             key="scan-icon"
             className="absolute inset-0 flex items-center justify-center"
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.97, transition: iconExit }}
-            transition={iconEnter}
+            initial={
+              reduceMotion
+                ? { opacity: 0 }
+                : { opacity: 0, transform: "scale(0.95)" }
+            }
+            animate={
+              reduceMotion
+                ? { opacity: 1 }
+                : { opacity: 1, transform: "scale(1)" }
+            }
+            exit={
+              reduceMotion
+                ? { opacity: 0, transition: iconExit }
+                : {
+                    opacity: 0,
+                    transform: "scale(0.97)",
+                    transition: iconExit,
+                  }
+            }
+            transition={reduceMotion ? { duration: 0.08 } : iconEnter}
           >
             <ScanIcon size={16} />
           </motion.span>
@@ -59,6 +93,8 @@ function ScanModeIcon({ scanMode }: { scanMode: boolean }) {
 }
 
 function ScanModeLabel({ scanMode }: { scanMode: boolean }) {
+  const reduceMotion = useReducedMotion();
+
   return (
     <span className="relative inline-grid">
       <span className="invisible col-start-1 row-start-1" aria-hidden>
@@ -68,10 +104,30 @@ function ScanModeLabel({ scanMode }: { scanMode: boolean }) {
         <motion.span
           key={scanMode ? "exit-label" : "scan-label"}
           className="col-start-1 row-start-1"
-          initial={{ opacity: 0, y: 4 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -2, transition: { duration: 0.1, ease: EASE_OUT } }}
-          transition={{ duration: 0.14, ease: EASE_OUT }}
+          initial={
+            reduceMotion
+              ? { opacity: 0 }
+              : { opacity: 0, transform: "translateY(4px)" }
+          }
+          animate={
+            reduceMotion
+              ? { opacity: 1 }
+              : { opacity: 1, transform: "translateY(0)" }
+          }
+          exit={
+            reduceMotion
+              ? { opacity: 0, transition: { duration: 0.08, ease: EASE_OUT } }
+              : {
+                  opacity: 0,
+                  transform: "translateY(-2px)",
+                  transition: { duration: 0.1, ease: EASE_OUT },
+                }
+          }
+          transition={
+            reduceMotion
+              ? { duration: 0.08 }
+              : { duration: 0.14, ease: EASE_OUT }
+          }
         >
           {scanMode ? "Exit scan" : "Scan QR"}
         </motion.span>
@@ -91,7 +147,7 @@ export function PlaygroundNavbar({
 
   return (
     <nav
-      className={cn("flex items-center gap-2", className)}
+      className={cn("flex flex-wrap items-center gap-1.5 md:gap-2", className)}
       style={style}
       aria-label="Site links"
     >

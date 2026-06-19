@@ -38,14 +38,14 @@ function PlaygroundMain() {
         <QrBoard className="h-full w-full" />
       </div>
 
-      <div className="pointer-events-none absolute inset-0 z-10 p-4">
-        <div className="grid h-full min-h-0 grid-cols-[minmax(0,1fr)_clamp(260px,28%,380px)] gap-3">
+      <div className="playground-chrome pointer-events-none absolute inset-0 z-10 p-3 md:p-4">
+        <div className="grid h-full min-h-0 grid-cols-[minmax(0,1fr)_clamp(240px,30%,360px)] gap-2 md:gap-3 lg:grid-cols-[minmax(0,1fr)_clamp(260px,28%,380px)]">
           <PlaygroundNavbar
-            className="playground-enter-item pointer-events-auto col-start-1 row-start-1 self-start ml-6 mt-1"
+            className="playground-enter-item pointer-events-auto col-start-1 row-start-1 self-start ml-2 mt-1 md:ml-4 lg:ml-6"
             style={{ animationDelay: "40ms" }}
           />
           <Pill
-            className="playground-enter-item pointer-events-auto col-start-2 row-start-1 min-h-0 h-full"
+            className="playground-enter-item pointer-events-auto col-start-2 row-start-1 min-h-0 h-full min-w-0"
             style={{ animationDelay: "60ms" }}
           >
             <PlaygroundPanel />

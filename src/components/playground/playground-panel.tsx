@@ -10,12 +10,15 @@ export function PlaygroundPanel() {
   const { generate, loading, error } = usePlayground();
 
   return (
-    <div className="flex h-full min-h-0 flex-col px-5 pt-4 pb-4">
-      <header className="playground-panel-section shrink-0 pb-4 text-center">
+    <div className="flex h-full min-h-0 flex-col px-4 pt-3 pb-3 md:px-5 md:pt-4 md:pb-4">
+      <header
+        className="playground-panel-section shrink-0 pb-3 text-center md:pb-4"
+        style={{ ["--playground-panel-delay" as string]: "80ms" }}
+      >
         <h2
           className={cn(
             caveat.className,
-            "text-[28px] font-bold text-foreground text-balance",
+            "text-[24px] font-bold text-foreground text-balance md:text-[28px]",
           )}
         >
           GitQR PlayGround
@@ -32,7 +35,7 @@ export function PlaygroundPanel() {
         </div>
         <div
           className="playground-panel-section flex min-h-0 flex-1 flex-col overflow-y-auto pt-2"
-          style={{ animationDelay: "120ms" }}
+          style={{ ["--playground-panel-delay" as string]: "120ms" }}
         >
           <PlaygroundCustomization />
         </div>

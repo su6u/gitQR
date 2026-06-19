@@ -41,7 +41,7 @@ export const PLAYGROUND_ACCENT_HOVER = "#FA70B3";
 export const PLAYGROUND_ACCENT_ACTIVE = "#FA70B3";
 
 const PLAYGROUND_CONTROL_SURFACE =
-  "bg-playground-control hover:bg-hover active:bg-active transition-colors duration-80";
+  "bg-playground-control [@media(hover:hover)_and_(pointer:fine)]:hover:bg-hover active:bg-active transition-colors duration-80 ease-[cubic-bezier(0.23,1,0.32,1)]";
 const SELECT_TRIGGER = `h-8 min-h-8 w-full min-w-0 px-3 text-[13px] ${PLAYGROUND_CONTROL_SURFACE}`;
 const PICKER_TRIGGER = `h-8 min-h-8 px-2.5 text-[13px] [&_span]:text-[13px] ${PLAYGROUND_CONTROL_SURFACE}`;
 const SLIDER_TRACK_STYLE = {
@@ -101,11 +101,12 @@ function PaletteOption({
       title={preset.label}
       onClick={onSelect}
       className={cn(
-        "relative size-7 shrink-0 overflow-hidden rounded-full transition-[opacity,box-shadow] duration-80",
+        "relative size-7 shrink-0 overflow-hidden rounded-full transition-[opacity,box-shadow,transform] duration-80 ease-[cubic-bezier(0.23,1,0.32,1)] active:scale-[0.96] motion-reduce:active:scale-100",
+        "before:absolute before:-inset-1.5 before:content-['']",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FA70B3]/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
         selected
           ? "opacity-100 shadow-[inset_0_0_0_1px_rgba(0,0,0,0.12),0_0_0_2px_var(--background),0_0_0_3px_#FA70B3]"
-          : "opacity-70 hover:opacity-100 shadow-[inset_0_0_0_1px_rgba(0,0,0,0.08)]",
+          : "opacity-70 shadow-[inset_0_0_0_1px_rgba(0,0,0,0.08)] [@media(hover:hover)_and_(pointer:fine)]:hover:opacity-100",
       )}
       style={{
         background: `linear-gradient(to right, ${preset.colors.join(", ")})`,
@@ -309,7 +310,7 @@ export function PlaygroundCustomization() {
         </PlaygroundRow>
 
         {exportLayout && (
-          <p className="text-[11px] leading-snug text-muted-foreground">
+          <p className="text-[11px] leading-snug text-muted-foreground tabular-nums">
             {exportLayout.canvasSize}×{exportLayout.canvasSize} px canvas, QR
             centered at {exportLayout.symbolSize}×{exportLayout.symbolSize} px.
           </p>

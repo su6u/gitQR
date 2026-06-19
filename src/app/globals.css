@@ -345,6 +345,7 @@
   opacity: 0;
   transform: translateY(6px);
   animation: playground-enter 260ms cubic-bezier(0.23, 1, 0.32, 1) forwards;
+  animation-delay: var(--playground-panel-delay, 0ms);
 }
 
 [data-enter-seen] .playground-enter-item,
@@ -363,6 +364,12 @@
   .playground-panel-section {
     animation: none;
     opacity: 1;
+    transform: none;
+  }
+
+  .playground-nav-pill:active:not(:disabled),
+  .playground-enter-pill:active:not(:disabled),
+  .playground-download-pill:active:not(:disabled) {
     transform: none;
   }
 }
@@ -613,6 +620,14 @@
 .playground-enter-pill:active:not(:disabled),
 .playground-download-pill:active:not(:disabled) {
   transform: scale(0.96);
+  transition-duration: 120ms;
+}
+
+/* Pill shell owns press scale — don't compound with button inner scale. */
+.playground-nav-pill .group:active > span[aria-hidden],
+.playground-enter-pill .group:active:not(:disabled) > span[aria-hidden],
+.playground-download-pill .group:active:not(:disabled) > span[aria-hidden] {
+  transform: none;
 }
 
 /* QR board — repulsive field: JS lerp while active, CSS snap-back on leave */
@@ -775,7 +790,7 @@
     --ease-in-strong: cubic-bezier(0.55, 0, 1, 0.45);
     --ease-in-out-strong: cubic-bezier(0.77, 0, 0.175, 1);
     --scan-enter-dur: 240ms;
-    --scan-exit-dur: 150ms;
+    --scan-exit-dur: 120ms;
     --scan-press-dur: 150ms;
   }
 
