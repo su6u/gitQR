@@ -104,6 +104,26 @@ export function contributionPaletteForId(
   );
 }
 
+/** Export canvas background — green keeps the default; others get a palette tint. */
+export function exportBackgroundForPalette(id: ContributionPaletteId): string {
+  switch (id) {
+    case "pink":
+      return "#FBF8F9";
+    case "orange":
+      return "#FBF9F8";
+    case "yellow":
+      return "#FBFBF8";
+    case "blue":
+      return "#F8FAFB";
+    case "red":
+      return "#FBF8F8";
+    case "indigo":
+      return "#FAF8FB";
+    default:
+      return "#F9FBF8";
+  }
+}
+
 export function assertContributionPalettes(): void {
   for (const preset of CONTRIBUTION_PALETTE_PRESETS) {
     if (preset.colors[0] !== CONTRIBUTION_LEVEL_ZERO_GRAY) {

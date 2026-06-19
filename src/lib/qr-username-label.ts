@@ -22,20 +22,7 @@ export const DEFAULT_USERNAME_LABEL: QrUsernameLabelStyle = {
   usernameColor: USERNAME_COLOR_DEFAULT,
 };
 
-const REFERENCE_CANVAS_PX = 1024;
-const REFERENCE_SYMBOL_RATIO = 0.72;
-
-function symbolSizeAtCanvas(canvasSize: number): number {
-  const gap = QR_BOARD_GAP_PX;
-  const symbolTarget = Math.round(canvasSize * REFERENCE_SYMBOL_RATIO);
-  const modulePx = Math.round(
-    (symbolTarget - gap * (QR_MODULE_COUNT - 1)) / QR_MODULE_COUNT,
-  );
-  return modulePx * QR_MODULE_COUNT + gap * (QR_MODULE_COUNT - 1);
-}
-
-export const QR_USERNAME_REFERENCE_SYMBOL_PX =
-  symbolSizeAtCanvas(REFERENCE_CANVAS_PX);
+export const QR_USERNAME_REFERENCE_SYMBOL_PX = 1024;
 
 export interface QrUsernameLabelDrawLayout {
   offsetX: number;

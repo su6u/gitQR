@@ -9,6 +9,8 @@ import {
   QR_BOARD_GAP_PX,
   QR_BOARD_REFERENCE_CELL_PX,
 } from "@/lib/qr-layout";
+import type { ContributionPaletteId } from "@/lib/contribution-palettes";
+import { exportBackgroundForPalette } from "@/lib/contribution-palettes";
 import { roundnessForModulePx } from "@/lib/playground-style";
 import type { StyledQrGrid, StyledQrModule } from "@/lib/qr-map";
 import {
@@ -23,7 +25,7 @@ import {
 
 export const QR_EXPORT_BACKGROUND = "#F9FBF8";
 
-/** QR symbol span as a fraction of the export canvas — centered with margin. */
+/** QR symbol span as a fraction of the export canvas — margin around the symbol. */
 export const QR_EXPORT_SYMBOL_RATIO = 0.72;
 
 export type QrExportFormat = "png" | "svg";
@@ -32,35 +34,47 @@ export const QR_EXPORT_SIZES = [512, 1024, 2048] as const;
 export type QrExportSize = (typeof QR_EXPORT_SIZES)[number];
 
 export interface QrExportOptions {
-  /** Canvas edge length — QR is centered smaller inside this area. */
+  /** QR symbol edge length — canvas grows with margin so the symbol stays centered. */
   size: QrExportSize;
   format: QrExportFormat;
+  paletteId?: ContributionPaletteId;
   roundnessPx?: number;
   usernameLabel?: QrUsernameLabelStyle;
 }
 
+/** Gap/cell ratio locked to the 1024 export (~4.16px gap on 27px cells). */
+const QR_EXPORT_REF_MODULE_PX = Math.round(
+  (1024 - QR_BOARD_GAP_PX * 32) / 33,
+);
+const QR_EXPORT_REF_GAP = (1024 - QR_EXPORT_REF_MODULE_PX * 33) / 32;
+const QR_EXPORT_GAP_RATIO = QR_EXPORT_REF_GAP / QR_EXPORT_REF_MODULE_PX;
+
 export interface QrExportLayout {
   canvasSize: number;
   symbolSize: number;
+  patternSize: number;
   offsetX: number;
   offsetY: number;
+  moduleOffsetX: number;
+  moduleOffsetY: number;
   modulePx: number;
   gap: number;
   roundness: number;
 }
 
-/** Canvas at `canvasSize`, QR symbol centered with integer module pixels. */
+/** Symbol exactly `symbolSize`; gap scales with cell size like the 1024 export. */
 export function computeQrExportLayout(
   moduleCount: number,
-  canvasSize: number,
+  symbolSize: number,
   roundnessPx = 5,
 ): QrExportLayout {
-  const gap = QR_BOARD_GAP_PX;
-  const symbolTarget = Math.round(canvasSize * QR_EXPORT_SYMBOL_RATIO);
   const modulePx = Math.round(
-    (symbolTarget - gap * (moduleCount - 1)) / moduleCount,
+    symbolSize / (moduleCount + (moduleCount - 1) * QR_EXPORT_GAP_RATIO),
   );
-  const symbolSize = modulePx * moduleCount + gap * (moduleCount - 1);
+  const gap = modulePx * QR_EXPORT_GAP_RATIO;
+  const patternSize = modulePx * moduleCount + gap * (moduleCount - 1);
+  const patternInset = (symbolSize - patternSize) / 2;
+  const canvasSize = Math.round(symbolSize / QR_EXPORT_SYMBOL_RATIO);
   const offsetX = Math.round((canvasSize - symbolSize) / 2);
   const offsetY = offsetX;
   const roundness = roundnessForModulePx(
@@ -72,13 +86,33 @@ export function computeQrExportLayout(
   return {
     canvasSize,
     symbolSize,
+    patternSize,
     offsetX,
     offsetY,
+    moduleOffsetX: offsetX + patternInset,
+    moduleOffsetY: offsetY + patternInset,
     modulePx,
     gap,
     roundness,
   };
 }
+
+console.assert(
+  (() => {
+    const ratio = QR_EXPORT_GAP_RATIO;
+    const layouts = [512, 1024, 2048].map((size) =>
+      computeQrExportLayout(33, size),
+    );
+    return layouts.every(
+      (layout) =>
+        layout.symbolSize >= layout.patternSize &&
+        layout.patternSize <= layout.symbolSize &&
+        Math.abs(layout.gap / layout.modulePx - ratio) < 0.001 &&
+        layout.canvasSize > layout.symbolSize,
+    );
+  })(),
+  "export layout: proportional gap, pattern fits symbol",
+);
 
 function moduleRect(
   row: number,
@@ -87,8 +121,8 @@ function moduleRect(
 ): { x: number; y: number; size: number; roundness: number } {
   const span = layout.modulePx + layout.gap;
   return {
-    x: layout.offsetX + col * span,
-    y: layout.offsetY + row * span,
+    x: layout.moduleOffsetX + col * span,
+    y: layout.moduleOffsetY + row * span,
     size: layout.modulePx,
     roundness: Math.min(layout.roundness, layout.modulePx / 2),
   };
@@ -96,12 +130,12 @@ function moduleRect(
 
 function exportFilename(
   grid: StyledQrGrid,
-  layout: QrExportLayout,
+  exportSize: QrExportSize,
   format: QrExportFormat,
 ): string {
   const username = grid.url.match(/github\.com\/([^/?#]+)/i)?.[1];
   const slug = username ?? "qr";
-  return `git-qr-${slug}-${layout.canvasSize}.${format}`;
+  return `git-qr-${slug}-${exportSize}.${format}`;
 }
 
 function triggerDownload(blob: Blob, filename: string) {
@@ -117,19 +151,34 @@ function exportFill(mod: StyledQrModule): string {
   return mod.fill;
 }
 
-function finderDrawLayout(layout: QrExportLayout): FinderDrawLayout {
+function finderDrawLayout(
+  layout: QrExportLayout,
+  background: string,
+): FinderDrawLayout {
   return {
-    offsetX: layout.offsetX,
-    offsetY: layout.offsetY,
+    offsetX: layout.moduleOffsetX,
+    offsetY: layout.moduleOffsetY,
     modulePx: layout.modulePx,
     gap: layout.gap,
-    background: QR_EXPORT_BACKGROUND,
+    background,
     fillForModule: exportFill,
     pixelAlign: true,
   };
 }
 
-function exportLayoutForUsername(
+function exportModuleLayout(
+  layout: QrExportLayout,
+): QrUsernameLabelDrawLayout {
+  return {
+    offsetX: layout.moduleOffsetX,
+    offsetY: layout.moduleOffsetY,
+    symbolSize: layout.symbolSize,
+    modulePx: layout.modulePx,
+    gap: layout.gap,
+  };
+}
+
+function exportSymbolLayout(
   layout: QrExportLayout,
 ): QrUsernameLabelDrawLayout {
   return {
@@ -151,7 +200,7 @@ function moduleHiddenByUsernameCutout(
   if (!usernameLabel?.showUsername || !username) return false;
 
   const cutout = usernameLabelCutout(
-    exportLayoutForUsername(layout),
+    exportSymbolLayout(layout),
     username,
     usernameLabel,
   );
@@ -159,7 +208,7 @@ function moduleHiddenByUsernameCutout(
   return qrModuleInUsernameCutout(
     mod.row,
     mod.col,
-    exportLayoutForUsername(layout),
+    exportModuleLayout(layout),
     cutout,
   );
 }
@@ -167,11 +216,12 @@ function moduleHiddenByUsernameCutout(
 function renderSvg(
   grid: StyledQrGrid,
   layout: QrExportLayout,
+  background: string,
   usernameLabel?: QrUsernameLabelStyle,
 ): string {
   const { canvasSize } = layout;
-  const finderLayout = finderDrawLayout(layout);
-  const symbolLayout = exportLayoutForUsername(layout);
+  const finderLayout = finderDrawLayout(layout, background);
+  const symbolLayout = exportSymbolLayout(layout);
 
   const rects = grid.modules
     .filter(
@@ -194,28 +244,29 @@ function renderSvg(
           symbolLayout,
           username,
           usernameLabel,
-          QR_EXPORT_BACKGROUND,
+          background,
         )
       : "";
 
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${canvasSize}" height="${canvasSize}" viewBox="0 0 ${canvasSize} ${canvasSize}" shape-rendering="crispEdges"><rect width="${canvasSize}" height="${canvasSize}" fill="${QR_EXPORT_BACKGROUND}"/>${rects}${finderCircles}${usernameSvg}</svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${canvasSize}" height="${canvasSize}" viewBox="0 0 ${canvasSize} ${canvasSize}" shape-rendering="crispEdges"><rect width="${canvasSize}" height="${canvasSize}" fill="${background}"/>${rects}${finderCircles}${usernameSvg}</svg>`;
 }
 
 async function renderCanvas(
   grid: StyledQrGrid,
   layout: QrExportLayout,
+  background: string,
   usernameLabel?: QrUsernameLabelStyle,
 ): Promise<HTMLCanvasElement> {
-  const symbolLayout = exportLayoutForUsername(layout);
+  const symbolLayout = exportSymbolLayout(layout);
 
   const canvas = renderQrCaptureCanvas(grid, {
     size: layout.canvasSize,
-    offsetX: layout.offsetX,
-    offsetY: layout.offsetY,
+    offsetX: layout.moduleOffsetX,
+    offsetY: layout.moduleOffsetY,
     gap: layout.gap,
     roundness: layout.roundness,
     modulePx: layout.modulePx,
-    background: QR_EXPORT_BACKGROUND,
+    background,
     pixelAlign: true,
     fillForModule: exportFill,
     shouldDrawModule: (mod) =>
@@ -229,7 +280,7 @@ async function renderCanvas(
     throw new Error("Canvas 2D context unavailable");
   }
 
-  drawSolidFinders(ctx, grid, finderDrawLayout(layout));
+  drawSolidFinders(ctx, grid, finderDrawLayout(layout, background));
 
   const username = usernameFromQrUrl(grid.url);
   if (usernameLabel?.showUsername && username) {
@@ -238,7 +289,7 @@ async function renderCanvas(
       symbolLayout,
       username,
       usernameLabel,
-      QR_EXPORT_BACKGROUND,
+      background,
     );
   }
 
@@ -254,11 +305,12 @@ export async function downloadStyledQrGrid(
     options.size,
     options.roundnessPx,
   );
-  const filename = exportFilename(grid, layout, options.format);
+  const background = exportBackgroundForPalette(options.paletteId ?? "green");
+  const filename = exportFilename(grid, options.size, options.format);
 
   if (options.format === "svg") {
     triggerDownload(
-      new Blob([renderSvg(grid, layout, options.usernameLabel)], {
+      new Blob([renderSvg(grid, layout, background, options.usernameLabel)], {
         type: "image/svg+xml",
       }),
       filename,
@@ -266,7 +318,12 @@ export async function downloadStyledQrGrid(
     return;
   }
 
-  const canvas = await renderCanvas(grid, layout, options.usernameLabel);
+  const canvas = await renderCanvas(
+    grid,
+    layout,
+    background,
+    options.usernameLabel,
+  );
   const blob = await new Promise<Blob | null>((resolve) => {
     canvas.toBlob(resolve, "image/png");
   });
