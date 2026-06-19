@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { DownloadIcon } from "@/components/icons/download-icon";
 import { Button } from "@/components/ui/button";
 import { ColorPickerPopover } from "@/components/ui/color-picker";
+import { RadioGroup, RadioItem } from "@/components/ui/radio-group";
 import {
   Select,
   SelectContent,
@@ -49,6 +50,11 @@ const SLIDER_TRACK_STYLE = {
 } as const;
 const SLIDER_THUMB_COLOR = "#000";
 const SLIDER_THUMB_BORDER = "rgba(0, 0, 0, 0.08)";
+
+/** h-10 pill — 22px reads balanced vs md's default 16px icon. */
+const PlaygroundDownloadIcon = (({ className }: { className?: string }) => (
+  <DownloadIcon size={22} className={className} />
+)) as IconComponent;
 
 function PlaygroundSection({
   title,
@@ -185,6 +191,7 @@ export function PlaygroundCustomization() {
       await downloadStyledQrGrid(grid, {
         size: exportSize,
         format: exportFormat,
+        paletteId: style.paletteId,
         roundnessPx: style.roundnessPx,
         usernameLabel: {
           showUsername: style.showUsername,
@@ -293,26 +300,31 @@ export function PlaygroundCustomization() {
         </PlaygroundRow>
 
         <PlaygroundRow label="Format">
-          <Select
+          <RadioGroup
+            orientation="horizontal"
             value={exportFormat}
             onValueChange={(value) => setExportFormat(value as QrExportFormat)}
+            className="flex w-full flex-row"
           >
-            <SelectTrigger className={SELECT_TRIGGER} placeholder="Format" />
-            <SelectContent>
-              <SelectItem index={0} value="png">
-                PNG — raster
-              </SelectItem>
-              <SelectItem index={1} value="svg">
-                SVG — vector
-              </SelectItem>
-            </SelectContent>
-          </Select>
+            <RadioItem
+              index={0}
+              value="png"
+              label="PNG"
+              className="min-w-0 flex-1"
+            />
+            <RadioItem
+              index={1}
+              value="svg"
+              label="SVG"
+              className="min-w-0 flex-1"
+            />
+          </RadioGroup>
         </PlaygroundRow>
 
         {exportLayout && (
           <p className="text-[11px] leading-snug text-muted-foreground tabular-nums">
-            {exportLayout.canvasSize}×{exportLayout.canvasSize} px canvas, QR
-            centered at {exportLayout.symbolSize}×{exportLayout.symbolSize} px.
+            {exportLayout.symbolSize}×{exportLayout.symbolSize} px QR, centered
+            on {exportLayout.canvasSize}×{exportLayout.canvasSize} px canvas.
           </p>
         )}
 
@@ -323,7 +335,7 @@ export function PlaygroundCustomization() {
             size="md"
             className="h-10 w-full rounded-full font-bold text-foreground hover:text-foreground focus-visible:ring-[#FA70B3]/40"
             style={{ fontVariationSettings: fontWeights.bold }}
-            leadingIcon={DownloadIcon as IconComponent}
+            leadingIcon={PlaygroundDownloadIcon}
             disabled={downloading || !grid}
             onClick={() => {
               void handleDownload();
