@@ -12,8 +12,18 @@ import {
 } from "react";
 import { toast } from "sonner";
 import { scanCopyToastClassNames } from "@/components/ui/sonner";
+import {
+  type ContributionPaletteId,
+  contributionPaletteForId,
+} from "@/lib/contribution-palettes";
 import type { ContributionGrid } from "@/lib/contributions";
 import { githubUsernameFromUrl } from "@/lib/github-contributions";
+import {
+  clampRoundnessPx,
+  clampUsernameFontPx,
+  DEFAULT_PLAYGROUND_STYLE,
+  type PlaygroundStyle,
+} from "@/lib/playground-style";
 import { buildStyledQrGrid, type StyledQrGrid } from "@/lib/qr-map";
 import { decodeStyledQrGrid, preloadQrDecoders } from "@/lib/qr-decode";
 
@@ -24,11 +34,17 @@ export type ScanStatus = "idle" | "scanning" | "success" | "error";
 interface PlaygroundContextValue {
   githubUrl: string | null;
   grid: StyledQrGrid | null;
+  style: PlaygroundStyle;
   loading: boolean;
   error: string | null;
   scanMode: boolean;
   scanStatus: ScanStatus;
   generate: (url: string) => Promise<void>;
+  setRoundnessPx: (value: number) => void;
+  setPaletteId: (id: ContributionPaletteId) => void;
+  setShowUsername: (enabled: boolean) => void;
+  setUsernameFontPx: (value: number) => void;
+  setUsernameColor: (color: string) => void;
   toggleScanMode: () => void;
   exitScanMode: () => void;
   scanQr: () => Promise<void>;
@@ -61,28 +77,55 @@ async function fetchContributionGrid(
   return payload.weeks;
 }
 
-async function loadStyledGrid(url: string): Promise<StyledQrGrid> {
+async function loadStyledGrid(
+  url: string,
+  style: PlaygroundStyle,
+): Promise<{ grid: StyledQrGrid; contributions: ContributionGrid }> {
   const username = githubUsernameFromUrl(url);
   const contributions = await fetchContributionGrid(username);
-  return buildStyledQrGrid(url, contributions);
+  const grid = await buildStyledQrGrid(url, contributions, {
+    palette: contributionPaletteForId(style.paletteId),
+  });
+  return { grid, contributions };
+}
+
+async function restyleGrid(
+  url: string,
+  contributions: ContributionGrid,
+  style: PlaygroundStyle,
+): Promise<StyledQrGrid> {
+  return buildStyledQrGrid(url, contributions, {
+    palette: contributionPaletteForId(style.paletteId),
+  });
 }
 
 export function PlaygroundProvider({ children }: { children: ReactNode }) {
   const [githubUrl, setGithubUrl] = useState<string | null>(null);
   const [grid, setGrid] = useState<StyledQrGrid | null>(null);
+  const [style, setStyle] = useState<PlaygroundStyle>(DEFAULT_PLAYGROUND_STYLE);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [scanMode, setScanMode] = useState(false);
   const [scanStatus, setScanStatus] = useState<ScanStatus>("idle");
   const hasUserSubmittedRef = useRef(false);
+  const activeUrlRef = useRef<string | null>(null);
+  const contributionsRef = useRef<ContributionGrid | null>(null);
+  const styleRef = useRef(style);
+  const skipPaletteRestyleRef = useRef(true);
+  styleRef.current = style;
 
   useEffect(() => {
     let cancelled = false;
 
     void (async () => {
       try {
-        const styled = await loadStyledGrid(DEMO_GITHUB_URL);
+        const { grid: styled, contributions } = await loadStyledGrid(
+          DEMO_GITHUB_URL,
+          styleRef.current,
+        );
         if (!cancelled && !hasUserSubmittedRef.current) {
+          activeUrlRef.current = DEMO_GITHUB_URL;
+          contributionsRef.current = contributions;
           setGrid(styled);
         }
       } catch {
@@ -94,6 +137,31 @@ export function PlaygroundProvider({ children }: { children: ReactNode }) {
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    if (skipPaletteRestyleRef.current) {
+      skipPaletteRestyleRef.current = false;
+      return;
+    }
+
+    const url = activeUrlRef.current;
+    const contributions = contributionsRef.current;
+    if (!url || !contributions) return;
+
+    let cancelled = false;
+    void (async () => {
+      try {
+        const styled = await restyleGrid(url, contributions, style);
+        if (!cancelled) setGrid(styled);
+      } catch {
+        // Keep the previous grid if restyle fails.
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [style.paletteId]);
 
   const resetScanFeedback = useCallback(() => {
     setScanStatus("idle");
@@ -121,16 +189,57 @@ export function PlaygroundProvider({ children }: { children: ReactNode }) {
     setError(null);
 
     try {
-      const styled = await loadStyledGrid(url);
+      const { grid: styled, contributions } = await loadStyledGrid(
+        url,
+        styleRef.current,
+      );
+      activeUrlRef.current = url;
+      contributionsRef.current = contributions;
       setGithubUrl(url);
       setGrid(styled);
     } catch (err) {
       setGrid(null);
       setGithubUrl(null);
+      activeUrlRef.current = null;
+      contributionsRef.current = null;
       setError(err instanceof Error ? err.message : "Generation failed");
     } finally {
       setLoading(false);
     }
+  }, []);
+
+  const setRoundnessPx = useCallback((value: number) => {
+    setStyle((prev) => {
+      const roundnessPx = clampRoundnessPx(value);
+      return prev.roundnessPx === roundnessPx ? prev : { ...prev, roundnessPx };
+    });
+  }, []);
+
+  const setPaletteId = useCallback((paletteId: ContributionPaletteId) => {
+    setStyle((prev) =>
+      prev.paletteId === paletteId ? prev : { ...prev, paletteId },
+    );
+  }, []);
+
+  const setShowUsername = useCallback((showUsername: boolean) => {
+    setStyle((prev) =>
+      prev.showUsername === showUsername ? prev : { ...prev, showUsername },
+    );
+  }, []);
+
+  const setUsernameFontPx = useCallback((value: number) => {
+    setStyle((prev) => {
+      const usernameFontPx = clampUsernameFontPx(value);
+      return prev.usernameFontPx === usernameFontPx
+        ? prev
+        : { ...prev, usernameFontPx };
+    });
+  }, []);
+
+  const setUsernameColor = useCallback((usernameColor: string) => {
+    setStyle((prev) =>
+      prev.usernameColor === usernameColor ? prev : { ...prev, usernameColor },
+    );
   }, []);
 
   const scanQr = useCallback(async () => {
@@ -174,11 +283,17 @@ export function PlaygroundProvider({ children }: { children: ReactNode }) {
     () => ({
       githubUrl,
       grid,
+      style,
       loading,
       error,
       scanMode,
       scanStatus,
       generate,
+      setRoundnessPx,
+      setPaletteId,
+      setShowUsername,
+      setUsernameFontPx,
+      setUsernameColor,
       toggleScanMode,
       exitScanMode,
       scanQr,
@@ -186,11 +301,17 @@ export function PlaygroundProvider({ children }: { children: ReactNode }) {
     [
       githubUrl,
       grid,
+      style,
       loading,
       error,
       scanMode,
       scanStatus,
       generate,
+      setRoundnessPx,
+      setPaletteId,
+      setShowUsername,
+      setUsernameFontPx,
+      setUsernameColor,
       toggleScanMode,
       exitScanMode,
       scanQr,

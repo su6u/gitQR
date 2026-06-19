@@ -1,11 +1,11 @@
 "use client";
 
-import type { CSSProperties } from "react";
-import { type ReactNode, useCallback, useState } from "react";
+import type { CSSProperties, ReactNode } from "react";
+import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import { DownloadIcon } from "@/components/icons/download-icon";
 import { Button } from "@/components/ui/button";
-import { ColorPickerPopover, ColorSwatch } from "@/components/ui/color-picker";
+import { ColorPickerPopover } from "@/components/ui/color-picker";
 import {
   Select,
   SelectContent,
@@ -14,8 +14,18 @@ import {
 } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
+import {
+  CONTRIBUTION_PALETTE_PRESETS,
+  type ContributionPalettePreset,
+} from "@/lib/contribution-palettes";
 import { fontWeights } from "@/lib/font-weight";
 import type { IconComponent } from "@/lib/icons";
+import {
+  PLAYGROUND_ROUNDNESS_MAX,
+  PLAYGROUND_ROUNDNESS_MIN,
+  USERNAME_FONT_MAX,
+  USERNAME_FONT_MIN,
+} from "@/lib/playground-style";
 import {
   computeQrExportLayout,
   downloadStyledQrGrid,
@@ -23,26 +33,17 @@ import {
   type QrExportFormat,
   type QrExportSize,
 } from "@/lib/qr-export";
+import { cn } from "@/lib/utils";
 import { usePlayground } from "./playground-provider";
-
-const BACKGROUND_PRESETS = [
-  { color: "#FFFFFF", label: "White" },
-  { color: "#F4F4F4", label: "Soft gray" },
-  { color: "#FAFAFA", label: "Soft" },
-  { color: "#E8F5E9", label: "Mint" },
-] as const;
 
 export const PLAYGROUND_ACCENT = "#FA70B3";
 export const PLAYGROUND_ACCENT_HOVER = "#FA70B3";
 export const PLAYGROUND_ACCENT_ACTIVE = "#FA70B3";
 
-const MODULE_DEFAULT = "#3D3D3D";
-const BACKGROUND_DEFAULT = "#FFFFFF";
-
 const PLAYGROUND_CONTROL_SURFACE =
   "bg-playground-control hover:bg-hover active:bg-active transition-colors duration-80";
-const PICKER_TRIGGER = `h-8 min-h-8 px-2.5 text-[13px] [&_span]:text-[13px] ${PLAYGROUND_CONTROL_SURFACE}`;
 const SELECT_TRIGGER = `h-8 min-h-8 w-full min-w-0 px-3 text-[13px] ${PLAYGROUND_CONTROL_SURFACE}`;
+const PICKER_TRIGGER = `h-8 min-h-8 px-2.5 text-[13px] [&_span]:text-[13px] ${PLAYGROUND_CONTROL_SURFACE}`;
 const SLIDER_TRACK_STYLE = {
   backgroundColor: "var(--playground-track)",
 } as const;
@@ -80,6 +81,36 @@ function PlaygroundRow({
       </span>
       <div className="min-w-0 flex-1">{children}</div>
     </div>
+  );
+}
+
+function PaletteOption({
+  preset,
+  selected,
+  onSelect,
+}: {
+  preset: ContributionPalettePreset;
+  selected: boolean;
+  onSelect: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={preset.label}
+      aria-pressed={selected}
+      title={preset.label}
+      onClick={onSelect}
+      className={cn(
+        "relative size-7 shrink-0 overflow-hidden rounded-full transition-[opacity,box-shadow] duration-80",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FA70B3]/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+        selected
+          ? "opacity-100 shadow-[inset_0_0_0_1px_rgba(0,0,0,0.12),0_0_0_2px_var(--background),0_0_0_3px_#FA70B3]"
+          : "opacity-70 hover:opacity-100 shadow-[inset_0_0_0_1px_rgba(0,0,0,0.08)]",
+      )}
+      style={{
+        background: `linear-gradient(to right, ${preset.colors.join(", ")})`,
+      }}
+    />
   );
 }
 
@@ -125,19 +156,21 @@ function PlaygroundSlider({
 }
 
 export function PlaygroundCustomization() {
-  const { grid } = usePlayground();
-  const [moduleColor, setModuleColor] = useState(MODULE_DEFAULT);
-  const [backgroundColor, setBackgroundColor] = useState(BACKGROUND_DEFAULT);
-  const [roundness, setRoundness] = useState(4);
-  const [gap, setGap] = useState(3);
-  const [profileImage, setProfileImage] = useState(true);
-  const [imageSize, setImageSize] = useState(36);
+  const {
+    grid,
+    style,
+    setRoundnessPx,
+    setPaletteId,
+    setShowUsername,
+    setUsernameFontPx,
+    setUsernameColor,
+  } = usePlayground();
   const [exportSize, setExportSize] = useState<QrExportSize>(1024);
   const [exportFormat, setExportFormat] = useState<QrExportFormat>("png");
   const [downloading, setDownloading] = useState(false);
 
   const exportLayout = grid
-    ? computeQrExportLayout(grid.size, exportSize)
+    ? computeQrExportLayout(grid.size, exportSize, style.roundnessPx)
     : null;
 
   const handleDownload = useCallback(async () => {
@@ -151,6 +184,12 @@ export function PlaygroundCustomization() {
       await downloadStyledQrGrid(grid, {
         size: exportSize,
         format: exportFormat,
+        roundnessPx: style.roundnessPx,
+        usernameLabel: {
+          showUsername: style.showUsername,
+          usernameFontPx: style.usernameFontPx,
+          usernameColor: style.usernameColor,
+        },
       });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Download failed", {
@@ -159,68 +198,37 @@ export function PlaygroundCustomization() {
     } finally {
       setDownloading(false);
     }
-  }, [grid, exportSize, exportFormat]);
+  }, [grid, exportSize, exportFormat, style]);
 
   return (
     <div className="flex flex-col gap-5">
       <PlaygroundSection title="Style">
-        <PlaygroundRow label="Module">
-          <ColorPickerPopover
-            value={moduleColor}
-            onValueChange={(value) => setModuleColor(value)}
-            triggerClassName={`${PICKER_TRIGGER} w-full justify-between`}
-            triggerShowValue
-            hideEyedropper
-          />
-        </PlaygroundRow>
-
-        <PlaygroundRow label="Background">
-          <div className="flex min-w-0 flex-1 items-center gap-1.5">
-            {BACKGROUND_PRESETS.map((preset) => (
-              <ColorSwatch
-                key={preset.color}
-                color={preset.color}
-                size={24}
-                selected={
-                  backgroundColor.toLowerCase() === preset.color.toLowerCase()
-                }
-                selectedRingColor={PLAYGROUND_ACCENT}
-                aria-label={preset.label}
-                onClick={() => setBackgroundColor(preset.color)}
+        <div className="flex flex-col gap-2 pl-3">
+          <span className="text-[12px] text-muted-foreground">Color</span>
+          <div className="flex flex-wrap items-center gap-3">
+            {CONTRIBUTION_PALETTE_PRESETS.map((preset) => (
+              <PaletteOption
+                key={preset.id}
+                preset={preset}
+                selected={style.paletteId === preset.id}
+                onSelect={() => setPaletteId(preset.id)}
               />
             ))}
-            <ColorPickerPopover
-              value={backgroundColor}
-              onValueChange={(value) => setBackgroundColor(value)}
-              triggerClassName={PICKER_TRIGGER}
-              triggerShowValue={false}
-              hideEyedropper
-            />
           </div>
-        </PlaygroundRow>
+        </div>
 
         <PlaygroundSlider
           label="Roundness"
-          value={roundness}
-          onChange={setRoundness}
-          min={0}
-          max={8}
-          step={1}
-          formatValue={(v) => `${v}px`}
-        />
-
-        <PlaygroundSlider
-          label="Gap"
-          value={gap}
-          onChange={setGap}
-          min={0}
-          max={12}
+          value={style.roundnessPx}
+          onChange={setRoundnessPx}
+          min={PLAYGROUND_ROUNDNESS_MIN}
+          max={PLAYGROUND_ROUNDNESS_MAX}
           step={1}
           formatValue={(v) => `${v}px`}
         />
       </PlaygroundSection>
 
-      <PlaygroundSection title="GitHub">
+      <PlaygroundSection title="Username">
         <div
           style={
             {
@@ -230,25 +238,38 @@ export function PlaygroundCustomization() {
           }
         >
           <Switch
-            label="Profile image"
-            checked={profileImage}
-            onToggle={() => setProfileImage((on) => !on)}
+            label="Show username"
+            checked={style.showUsername}
+            onToggle={() => setShowUsername(!style.showUsername)}
             thumbClassName="bg-black"
             className="gap-2.5 px-0 py-1 [&_span]:text-[13px] [&_[role=switch]]:focus-visible:ring-[#FA70B3]/40"
           />
         </div>
 
         <PlaygroundSlider
-          label="Image size"
-          value={imageSize}
-          onChange={setImageSize}
-          min={20}
-          max={56}
+          label="Text size"
+          value={style.usernameFontPx}
+          onChange={setUsernameFontPx}
+          min={USERNAME_FONT_MIN}
+          max={USERNAME_FONT_MAX}
           step={1}
-          formatValue={(v) => `${v}%`}
-          disabled={!profileImage}
+          formatValue={(v) => `${v}px`}
+          disabled={!style.showUsername}
         />
 
+        <PlaygroundRow label="Text color">
+          <div
+            className={cn(!style.showUsername && "pointer-events-none opacity-40")}
+          >
+            <ColorPickerPopover
+              value={style.usernameColor}
+              onValueChange={setUsernameColor}
+              triggerClassName={`${PICKER_TRIGGER} w-full justify-between`}
+              triggerShowValue
+              hideEyedropper
+            />
+          </div>
+        </PlaygroundRow>
       </PlaygroundSection>
 
       <PlaygroundSection title="Export">
@@ -299,7 +320,7 @@ export function PlaygroundCustomization() {
             type="button"
             variant="ghost"
             size="md"
-            className="h-9 w-full rounded-full font-bold text-foreground hover:text-foreground focus-visible:ring-[#FA70B3]/40"
+            className="h-10 w-full rounded-full font-bold text-foreground hover:text-foreground focus-visible:ring-[#FA70B3]/40"
             style={{ fontVariationSettings: fontWeights.bold }}
             leadingIcon={DownloadIcon as IconComponent}
             disabled={downloading || !grid}

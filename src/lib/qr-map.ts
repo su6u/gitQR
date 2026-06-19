@@ -1,6 +1,7 @@
 import {
   type ContributionDay,
   type ContributionGrid,
+  colorForLevel,
   contributionForQrModule,
   GITHUB_CONTRIBUTION_COLORS,
 } from "@/lib/contributions";
@@ -37,7 +38,10 @@ export function styledGridCameraScore(grid: StyledQrGrid): number {
 async function pickBestMaskMatrix(
   url: string,
   contributions: ContributionGrid,
-  options: { background?: string } = {},
+  options: {
+    background?: string;
+    palette?: readonly string[];
+  } = {},
 ): Promise<QrBitMatrix> {
   let bestMatrix: QrBitMatrix | null = null;
   let bestScore = Number.POSITIVE_INFINITY;
@@ -67,17 +71,23 @@ function moduleFill(
   isDark: boolean,
   contribution: ContributionDay,
   background: string,
+  palette: readonly string[],
 ): string {
   if (!isDark) return background;
-  return darkFillForLevel(contribution.level, contribution.color);
+  const levelColor = colorForLevel(contribution.level, palette);
+  return darkFillForLevel(contribution.level, levelColor);
 }
 
 export function mapQrToContributions(
   matrix: QrBitMatrix,
   contributions: ContributionGrid,
-  options: { background?: string } = {},
+  options: {
+    background?: string;
+    palette?: readonly string[];
+  } = {},
 ): StyledQrModule[] {
   const background = options.background ?? GITHUB_CONTRIBUTION_COLORS[0];
+  const palette = options.palette ?? GITHUB_CONTRIBUTION_COLORS;
   const { size, dark } = matrix;
   const modules: StyledQrModule[] = [];
 
@@ -96,7 +106,7 @@ export function mapQrToContributions(
         col,
         isDark,
         contribution,
-        fill: moduleFill(isDark, contribution, background),
+        fill: moduleFill(isDark, contribution, background, palette),
       });
     }
   }
@@ -107,7 +117,10 @@ export function mapQrToContributions(
 export async function buildStyledQrGrid(
   url: string,
   contributions: ContributionGrid,
-  options: { background?: string } = {},
+  options: {
+    background?: string;
+    palette?: readonly string[];
+  } = {},
 ): Promise<StyledQrGrid> {
   const matrix = await pickBestMaskMatrix(url, contributions, options);
   if (matrix.size !== QR_MODULE_COUNT) {

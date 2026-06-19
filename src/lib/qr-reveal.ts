@@ -53,15 +53,59 @@ export function collectRevealIndices(
 }
 
 /** Random order — cell index → delay ms before it lights up. */
-export function buildRevealSchedule(cellIndices: number[]): Map<number, number> {
+export function buildRevealSchedule(
+  cellIndices: number[],
+  spreadMs = QR_REVEAL_SPREAD_MS,
+): Map<number, number> {
   const shuffled = shuffle(cellIndices);
   const stagger =
-    shuffled.length > 1 ? QR_REVEAL_SPREAD_MS / (shuffled.length - 1) : 0;
+    shuffled.length > 1 ? spreadMs / (shuffled.length - 1) : 0;
   const schedule = new Map<number, number>();
   for (let order = 0; order < shuffled.length; order++) {
     schedule.set(shuffled[order], Math.round(order * stagger));
   }
   return schedule;
+}
+
+/** Flip stagger order so the last cell to light is the first to dim. */
+export function reverseRevealSchedule(
+  schedule: Map<number, number>,
+): Map<number, number> {
+  const max = Math.max(0, ...schedule.values());
+  const reversed = new Map<number, number>();
+  for (const [index, delay] of schedule) {
+    reversed.set(index, max - delay);
+  }
+  return reversed;
+}
+
+/** Middle username hole — faster than the full-board QR reveal. */
+export const USERNAME_CUTOUT_SPREAD_MS = 520;
+
+export const USERNAME_TEXT_SPREAD_MS = 360;
+
+/** Board cell indices whose QR modules sit inside the username cutout. */
+export function collectUsernameCutoutIndices(
+  styledGrid: StyledQrGrid,
+  rows: number,
+  cols: number,
+  cutoutModuleKeys: Set<number>,
+): number[] {
+  const indices: number[] = [];
+  const total = rows * cols;
+
+  for (let i = 0; i < total; i++) {
+    const row = Math.floor(i / cols);
+    const col = i % cols;
+    const qrIndex = qrModuleIndex(row, col, rows, cols);
+    if (qrIndex === null) continue;
+    const mod = styledGrid.modules[qrIndex];
+    if (!mod) continue;
+    const key = mod.row * styledGrid.size + mod.col;
+    if (cutoutModuleKeys.has(key)) indices.push(i);
+  }
+
+  return indices;
 }
 
 if (import.meta.main) {
@@ -71,4 +115,11 @@ if (import.meta.main) {
   ]);
   const indices = collectRevealIndices(null, 10, 10, doodles);
   console.assert(indices.length === 2 && indices.includes(0) && indices.includes(5));
+
+  const schedule = buildRevealSchedule([1, 2, 3], 300);
+  const reversed = reverseRevealSchedule(schedule);
+  console.assert(reversed.size === 3);
+  for (const [index, delay] of schedule) {
+    console.assert(reversed.get(index) === 300 - delay);
+  }
 }

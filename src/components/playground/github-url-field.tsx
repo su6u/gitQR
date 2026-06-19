@@ -1,7 +1,7 @@
 "use client";
 
 import { Link2 } from "lucide-react";
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { InputField, InputGroup } from "@/components/ui/input-group";
 import { fontWeights } from "@/lib/font-weight";
@@ -53,8 +53,15 @@ export function GithubUrlField({
     runValidation(value);
   };
 
+  const canSubmit = useMemo(() => {
+    if (loading) return false;
+    const trimmed = value.trim();
+    if (!trimmed) return false;
+    return validateGithubUrl(trimmed).valid;
+  }, [value, loading]);
+
   const handleSubmit = () => {
-    if (loading) return;
+    if (!canSubmit) return;
 
     setTouched(true);
     const result = validateGithubUrl(value);
@@ -81,7 +88,7 @@ export function GithubUrlField({
         onKeyDown={(event) => {
           if (event.key === "Enter") {
             event.preventDefault();
-            handleSubmit();
+            if (canSubmit) handleSubmit();
           }
         }}
         error={touched ? error : undefined}
@@ -98,7 +105,7 @@ export function GithubUrlField({
               size="sm"
               className="h-7 shrink-0 px-3 text-[12px] text-foreground hover:text-foreground focus-visible:ring-[#FA70B3]/40"
               style={{ fontVariationSettings: fontWeights.medium }}
-              disabled={!value.trim() || loading}
+              disabled={!canSubmit}
               onClick={handleSubmit}
             >
               {loading ? "…" : "enter"}

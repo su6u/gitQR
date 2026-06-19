@@ -416,6 +416,7 @@
 .playground-enter-pill {
   --playground-gap-edge-inset: 2px;
   --playground-gap-edge-radius: 16px;
+  background-color: #000;
   transition:
     background-color 180ms var(--ease-out-strong),
     transform 150ms var(--ease-out-strong);
@@ -476,9 +477,30 @@
   border-radius: calc(
     var(--playground-gap-edge-radius) - var(--playground-gap-edge-inset)
   );
-  background: var(--playground-accent-fill);
   pointer-events: none;
   transition: background-color 150ms var(--ease-out-strong);
+}
+
+.playground-nav-pill::after {
+  background: var(--playground-accent-fill);
+}
+
+.playground-enter-pill::after {
+  background: var(--playground-accent-fill);
+}
+
+.playground-enter-pill:has(:disabled) {
+  background-color: color-mix(in oklab, #000 32%, white);
+  cursor: not-allowed;
+}
+
+.playground-enter-pill:has(:disabled) button:disabled {
+  pointer-events: auto;
+  cursor: not-allowed;
+}
+
+.playground-enter-pill:has(:disabled)::after {
+  background: color-mix(in oklab, var(--playground-accent-fill) 42%, white);
 }
 
 .playground-gap-edge-pill > *,
@@ -579,12 +601,10 @@
   background-color: transparent !important;
 }
 
-.playground-enter-pill:has(:disabled),
 .playground-download-pill:has(:disabled) {
   background-color: color-mix(in oklab, #fa70b3 58%, white);
 }
 
-.playground-enter-pill:has(:disabled)::after,
 .playground-download-pill:has(:disabled)::after {
   background-color: color-mix(in oklab, #fa70b3 38%, white);
 }
@@ -602,6 +622,11 @@
     --qr-ease-out: cubic-bezier(0.34, 1.6, 0.64, 1);
     --qr-reveal-dur: 280ms;
     --qr-reveal-start: #e3e3e3;
+    --qr-ease-enter: cubic-bezier(0.33, 1, 0.68, 1);
+  }
+
+  .qr-board {
+    --qr-reveal-dur: 280ms;
     --qr-ease-enter: cubic-bezier(0.33, 1, 0.68, 1);
   }
 
@@ -650,6 +675,98 @@
       transition: none;
       background-color: var(--qr-target-fill) !important;
     }
+
+    .qr-cell--username-cutout {
+      transition: none;
+    }
+
+    .qr-grid[data-username-reveal] .qr-cell--username-reveal {
+      transition: none;
+      background-color: #ffffff !important;
+    }
+
+    .qr-username-char--reveal {
+      transition: none;
+      color: var(--qr-username-text-color, #1a1a1a);
+    }
+  }
+
+  .qr-cell--username-cutout {
+    transition: background-color var(--qr-reveal-dur) var(--qr-ease-enter);
+  }
+
+  .qr-grid[data-username-reveal] .qr-cell--username-reveal {
+    background-color: var(--qr-username-start-fill) !important;
+    transition: background-color var(--qr-reveal-dur) var(--qr-ease-enter)
+      var(--qr-reveal-delay, 0ms);
+  }
+
+  .qr-grid[data-username-reveal] .qr-cell--username-reveal.qr-cell--username-lit {
+    background-color: #ffffff !important;
+  }
+
+  .qr-username-label {
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+    z-index: 1;
+  }
+
+  .qr-username-char {
+    transform: translate(var(--qr-x, 0px), var(--qr-y, 0px));
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .qr-board[data-magnet="active"] .qr-username-char {
+      transition: none;
+    }
+
+    .qr-board[data-magnet="settling"] .qr-username-char {
+      transition: transform var(--qr-dur) var(--qr-ease-out);
+    }
+
+    .qr-board[data-magnet="settling"] .qr-username-char--reveal {
+      transition:
+        transform var(--qr-dur) var(--qr-ease-out),
+        color var(--qr-reveal-dur) var(--qr-ease-enter)
+          var(--qr-reveal-delay, 0ms);
+    }
+
+    .qr-grid[data-magnet="active"] ~ .qr-username-label .qr-username-char {
+      transition: none;
+    }
+
+    .qr-grid[data-magnet="settling"] ~ .qr-username-label .qr-username-char {
+      transition: transform var(--qr-dur) var(--qr-ease-out);
+    }
+
+    .qr-grid[data-magnet="settling"]
+      ~ .qr-username-label
+      .qr-username-char--reveal {
+      transition:
+        transform var(--qr-dur) var(--qr-ease-out),
+        color var(--qr-reveal-dur) var(--qr-ease-enter)
+          var(--qr-reveal-delay, 0ms);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .qr-board[data-magnet="settling"] .qr-username-char,
+    .qr-grid[data-magnet="settling"] ~ .qr-username-label .qr-username-char {
+      transition: none;
+    }
+  }
+
+  .qr-username-char--reveal {
+    color: var(--qr-reveal-start, #e3e3e3);
+    transition: color var(--qr-reveal-dur) var(--qr-ease-enter)
+      var(--qr-reveal-delay, 0ms);
+  }
+
+  .qr-username-char--reveal.qr-username-char--lit {
+    color: var(--qr-username-text-color, #1a1a1a);
   }
 
   .qr-grid,
