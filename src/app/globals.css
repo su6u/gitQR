@@ -599,6 +599,23 @@
   width: 100%;
 }
 
+.playground-download-pill .group {
+  text-box-trim: none;
+}
+
+.playground-download-pill .group > span.relative {
+  align-items: center;
+  gap: 6px;
+}
+
+.playground-download-pill .group > span.relative img {
+  display: block;
+}
+
+.playground-download-pill .group > span.relative > span {
+  line-height: 1;
+}
+
 .playground-download-pill .group > span[aria-hidden] {
   background-color: transparent !important;
 }
