@@ -18,7 +18,7 @@ export function PlaygroundPanel() {
         <h2
           className={cn(
             caveat.className,
-            "translate-y-3 text-[24px] font-bold text-foreground text-balance md:translate-y-5 md:text-[28px]",
+            "translate-y-1 text-[24px] font-bold text-foreground text-balance md:translate-y-2 md:text-[28px]",
           )}
         >
           GitQR PlayGround
