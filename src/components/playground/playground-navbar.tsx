@@ -10,7 +10,8 @@ import { fontWeights } from "@/lib/font-weight";
 import { cn } from "@/lib/utils";
 import { usePlayground } from "./playground-provider";
 
-const GITHUB_REPO_URL = "https://github.com/su6u/git-qr";
+const GITHUB_REPO_URL = "https://github.com/su6u/GitQR";
+const README_HOW_IT_WORKS_URL = `${GITHUB_REPO_URL}#how-it-works`;
 
 const navLinkClass =
   "relative z-10 inline-flex h-9 w-full min-h-9 items-center gap-1.5 rounded-[20px] px-4 text-[13px] text-foreground outline-none bg-transparent [@media(hover:hover)_and_(pointer:fine)]:hover:text-foreground [&_svg]:stroke-current";
@@ -164,10 +165,16 @@ export function PlaygroundNavbar({
         </a>
       </span>
       <span className={navPillShellClass}>
-        <button type="button" className={navLinkClass} style={navLinkStyle}>
+        <a
+          href={README_HOW_IT_WORKS_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={navLinkClass}
+          style={navLinkStyle}
+        >
           <QuestionMarkIcon size={16} />
           How it works
-        </button>
+        </a>
       </span>
       <span
         className={navPillShellClass}
