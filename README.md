@@ -6,9 +6,9 @@
 
 <a href="https://gitqr.anshu.sh">play in the playground</a>
 &nbsp;·&nbsp;
-<a href="https://anshu.sh">learn more about QRs</a>
+<a href="public/images/cookie.png">star this for a cookie</a>
 &nbsp;·&nbsp;
-<a href="https://github.com/su6u/GitQR">star this for a cookie</a>
+<a href="LICENSE">license</a>
 
 </div>
 
