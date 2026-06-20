@@ -8,7 +8,7 @@
 &nbsp;·&nbsp;
 <a href="https://anshu.sh">learn more about QRs</a>
 &nbsp;·&nbsp;
-<a href="https://github.com/su6u/git-qr">star this for a cookie</a>
+<a href="https://github.com/su6u/GitQR">star this for a cookie</a>
 
 </div>
 
