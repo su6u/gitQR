@@ -102,7 +102,7 @@ export function GithubUrlField({
             type="button"
             intent="primary"
             size="small"
-            className="shrink-0 normal-case"
+            className="-mr-1 shrink-0 rounded-l-[6px] rounded-r-full pl-3 pr-4 normal-case"
             style={{ fontWeight: fontWeights.medium }}
             disabled={!canSubmit}
             loading={loading}
