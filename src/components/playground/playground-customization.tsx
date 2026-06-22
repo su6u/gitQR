@@ -93,6 +93,8 @@ function PaletteOption({
   selected: boolean;
   onSelect: () => void;
 }) {
+  const ringColor = preset.colors[3];
+
   return (
     <button
       type="button"
@@ -103,14 +105,18 @@ function PaletteOption({
       className={cn(
         "relative size-7 shrink-0 overflow-hidden rounded-full transition-[opacity,box-shadow,transform] duration-80 ease-[cubic-bezier(0.23,1,0.32,1)] active:scale-[0.96] motion-reduce:active:scale-100",
         "before:absolute before:-inset-1.5 before:content-['']",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FA70B3]/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
         selected
-          ? "opacity-100 shadow-[inset_0_0_0_1px_rgba(0,0,0,0.12),0_0_0_2px_var(--background),0_0_0_3px_#FA70B3]"
+          ? "opacity-100"
           : "opacity-70 shadow-[inset_0_0_0_1px_rgba(0,0,0,0.08)] [@media(hover:hover)_and_(pointer:fine)]:hover:opacity-100",
       )}
       style={{
         background: `linear-gradient(to right, ${preset.colors.join(", ")})`,
-      }}
+        boxShadow: selected
+          ? `inset 0 0 0 1px rgba(0,0,0,0.12), 0 0 0 2px var(--background), 0 0 0 3px ${ringColor}`
+          : undefined,
+        "--tw-ring-color": `color-mix(in oklab, ${ringColor} 42%, transparent)`,
+      } as CSSProperties}
     />
   );
 }
