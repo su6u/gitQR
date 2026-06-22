@@ -1,16 +1,9 @@
 import type { Metadata } from "next";
-import { Manrope } from "next/font/google";
 import "./globals.css";
 import { AgentationDev } from "@/components/agentation-dev";
 import { AppProviders } from "@/components/providers";
-import { boris, caveat } from "@/lib/fonts";
+import { openRunde } from "@/lib/fonts";
 import { cn } from "@/lib/utils";
-
-const manrope = Manrope({
-  subsets: ["latin"],
-  variable: "--font-sans",
-  weight: ["400", "500", "600", "700"],
-});
 
 const siteDescription = "Your green squares, but someone can scan them";
 
@@ -90,12 +83,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={cn(
-        "light font-sans antialiased",
-        manrope.variable,
-        boris.variable,
-        caveat.variable,
-      )}
+      className={cn("light font-sans antialiased", openRunde.variable)}
       style={{ colorScheme: "light" }}
     >
       <body>

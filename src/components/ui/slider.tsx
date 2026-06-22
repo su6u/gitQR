@@ -191,7 +191,7 @@ function ValueDisplay({
           {/* Ghost for layout stability — widest possible value */}
           <span
             className="col-start-1 row-start-1 invisible"
-            style={{ fontVariationSettings: fontWeights.medium }}
+            style={{ fontWeight: fontWeights.medium }}
             aria-hidden="true"
           >
             {label ? `${label}: ` : ""}
@@ -219,7 +219,7 @@ function ValueDisplay({
                 "w-[5ch] bg-transparent text-foreground outline-none border-b border-border text-center",
                 shape.input
               )}
-              style={{ fontVariationSettings: fontWeights.medium }}
+              style={{ fontWeight: fontWeights.medium }}
             />
           </span>
         </span>
@@ -244,11 +244,11 @@ function ValueDisplay({
   return (
     <span
       className={cn(
-        "inline-grid shrink-0 text-[13px] leading-none text-muted-foreground transition-[font-variation-settings] duration-100",
+        "inline-grid shrink-0 text-[13px] leading-none text-muted-foreground transition-[font-weight] duration-100",
         "tabular-nums"
       )}
       style={{
-        fontVariationSettings: isInteracting
+        fontWeight: isInteracting
           ? fontWeights.medium
           : fontWeights.normal,
       }}
@@ -256,7 +256,7 @@ function ValueDisplay({
       {/* Invisible ghost — reserves width of widest possible value */}
       <span
         className="col-start-1 row-start-1 invisible whitespace-nowrap"
-        style={{ fontVariationSettings: fontWeights.medium }}
+        style={{ fontWeight: fontWeights.medium }}
         aria-hidden="true"
       >
         {widestValue}
@@ -306,7 +306,7 @@ function TooltipValue({ value, formatValue, motionX }: TooltipValueProps) {
     >
       <span
         className={cn("text-[12px] text-background tabular-nums whitespace-nowrap bg-foreground px-2 py-1", shape.bg)}
-        style={{ fontVariationSettings: fontWeights.medium }}
+        style={{ fontWeight: fontWeights.medium }}
       >
         {formatValue(value)}
       </span>
@@ -916,7 +916,7 @@ const Slider = forwardRef<HTMLDivElement, SliderProps>(
                 >
                   <span
                     className={cn("text-[12px] text-background tabular-nums whitespace-nowrap bg-foreground px-2 py-1", shape.bg)}
-                    style={{ fontVariationSettings: fontWeights.medium }}
+                    style={{ fontWeight: fontWeights.medium }}
                   >
                     {formatValue(hoverPreview.snappedValue)}
                   </span>
@@ -1344,7 +1344,7 @@ const SliderComfortable = forwardRef<HTMLDivElement, SliderComfortableProps>(
             >
               <span
                 className={cn("text-[12px] text-background tabular-nums whitespace-nowrap bg-foreground px-2 py-1", shape.bg)}
-                style={{ fontVariationSettings: fontWeights.medium }}
+                style={{ fontWeight: fontWeights.medium }}
               >
                 {formatValue(hoverPreview.snappedValue)}
               </span>

@@ -1,203 +1,160 @@
 "use client";
 
-import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
-import { type ButtonHTMLAttributes, forwardRef } from "react";
-import type { IconComponent } from "@/lib/icons";
-import { useShape } from "@/lib/shape-context";
+import { type HTMLMotionProps, motion } from "framer-motion";
+import { Loader2 } from "lucide-react";
+import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  [
-    "group relative isolate inline-flex items-center justify-center outline-none cursor-pointer",
-    "text-box-trim-both text-box-edge-cap-alphabetic",
-    "transition-[color,transform] duration-80 [@media(hover:hover)_and_(pointer:fine)]:hover:text-foreground",
-    "disabled:opacity-50 disabled:pointer-events-none",
-    "focus-visible:ring-1 focus-visible:ring-brand",
-  ],
+  "flex items-center justify-center px-4 text-sm font-medium transition-[box-shadow,background-color] active:transition-none disabled:cursor-not-allowed disabled:opacity-50",
   {
     variants: {
-      variant: {
-        primary: "text-background",
-        secondary: "text-foreground",
-        tertiary: "border border-border text-foreground",
-        ghost: "text-muted-foreground [@media(hover:hover)_and_(pointer:fine)]:hover:text-foreground",
+      intent: {
+        default: [
+          "bg-[#36322F]",
+          "text-[#fff]",
+          "hover:enabled:bg-[#4a4542]",
+          "disabled:bg-[#8c8885]",
+          "[box-shadow:inset_0px_-2.108433723449707px_0px_0px_#171310,_0px_1.2048193216323853px_6.325301647186279px_0px_rgba(58,_33,_8,_58%)]",
+          "hover:enabled:[box-shadow:inset_0px_-2.53012px_0px_0px_#171310,_0px_1.44578px_7.59036px_0px_rgba(58,_33,_8,_64%)]",
+          "disabled:shadow-none",
+          "active:bg-[#2A2724]",
+          "active:[box-shadow:inset_0px_-1.5px_0px_0px_#171310,_0px_0.5px_2px_0px_rgba(58,_33,_8,_70%)]",
+        ],
+        primary: [
+          "bg-[#FA70B3]",
+          "text-[#fff]",
+          "hover:enabled:bg-[#FB85C0]",
+          "disabled:bg-[#FDCCE6]",
+          "[box-shadow:inset_0px_-2.108433723449707px_0px_0px_#E855A0,_0px_1.2048193216323853px_6.325301647186279px_0px_rgba(250,_112,_179,_58%)]",
+          "hover:enabled:[box-shadow:inset_0px_-2.53012px_0px_0px_#FA70B3,_0px_1.44578px_7.59036px_0px_rgba(250,_112,_179,_64%)]",
+          "disabled:shadow-none",
+          "active:bg-[#E855A0]",
+          "active:[box-shadow:inset_0px_-1.5px_0px_0px_#D94A94,_0px_0.5px_2px_0px_rgba(250,_112,_179,_70%)]",
+        ],
+        secondary: [
+          "bg-[#FFFFFF]",
+          "text-[#36322F]",
+          "hover:enabled:bg-[#F8F8F8]",
+          "disabled:bg-[#F0F0F0]",
+          "[box-shadow:inset_0px_-2.108433723449707px_0px_0px_#E0E0E0,_0px_1.2048193216323853px_6.325301647186279px_0px_rgba(0,_0,_0,_10%)]",
+          "hover:enabled:[box-shadow:inset_0px_-2.53012px_0px_0px_#E8E8E8,_0px_1.44578px_7.59036px_0px_rgba(0,_0,_0,_12%)]",
+          "disabled:shadow-none",
+          "border",
+          "border-[#E0E0E0]",
+          "active:bg-[#F0F0F0]",
+          "active:[box-shadow:inset_0px_-1.5px_0px_0px_#D8D8D8,_0px_0.5px_2px_0px_rgba(0,_0,_0,_15%)]",
+        ],
+        danger: [
+          "bg-[#E6492D]",
+          "text-[#fff]",
+          "hover:enabled:bg-[#F05B41]",
+          "disabled:bg-[#F5A799]",
+          "[box-shadow:inset_0px_-2.108433723449707px_0px_0px_#D63A1F,_0px_1.2048193216323853px_6.325301647186279px_0px_rgba(214,_58,_31,_58%)]",
+          "hover:enabled:[box-shadow:inset_0px_-2.53012px_0px_0px_#E6492D,_0px_1.44578px_7.59036px_0px_rgba(214,_58,_31,_64%)]",
+          "disabled:shadow-none",
+          "active:bg-[#D63A1F]",
+          "active:[box-shadow:inset_0px_-1.5px_0px_0px_#B22E17,_0px_0.5px_2px_0px_rgba(214,_58,_31,_70%)]",
+        ],
       },
       size: {
-        sm: "h-7 px-3 text-[12px] gap-1",
-        md: "h-8 px-4 text-[13px] gap-1.5",
-        lg: "h-9 px-5 text-[14px] gap-1.5",
-        "icon-sm": "h-8 w-8 p-0 [&_svg]:h-3.5 [&_svg]:w-3.5",
-        icon: "h-9 w-9 p-0 [&_svg]:h-4 [&_svg]:w-4",
-        "icon-lg": "h-10 w-10 p-0 [&_svg]:h-5 [&_svg]:w-5",
+        small: ["h-9", "rounded-[8px]", "px-2", "py-1", "text-xs"],
+        medium: ["h-11", "rounded-[9px]", "px-4", "py-2", "text-base"],
+        large: ["h-14", "rounded-[11px]", "px-6", "py-3", "text-lg"],
       },
-      iconLeft: { true: "" },
-      iconRight: { true: "" },
+      fullWidth: {
+        true: "w-full",
+      },
     },
     compoundVariants: [
-      { size: "sm", iconLeft: true, className: "pl-[6px]" },
-      { size: "md", iconLeft: true, className: "pl-[10px]" },
-      { size: "lg", iconLeft: true, className: "pl-[14px]" },
-      { size: "sm", iconRight: true, className: "pr-[6px]" },
-      { size: "md", iconRight: true, className: "pr-[10px]" },
-      { size: "lg", iconRight: true, className: "pr-[14px]" },
+      {
+        intent: ["default", "primary", "secondary", "danger"],
+        size: "medium",
+        className: "uppercase",
+      },
     ],
     defaultVariants: {
-      variant: "primary",
-      size: "md",
+      intent: "default",
+      size: "medium",
     },
   },
 );
 
-interface ButtonProps
-  extends ButtonHTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof buttonVariants> {
-  asChild?: boolean;
-  loading?: boolean;
-  leadingIcon?: IconComponent;
-  trailingIcon?: IconComponent;
-  /** Force the visual pressed/held state. Useful when the button drives an
-   *  external open piece of UI (a popover, dropdown, etc.) so it reads as
-   *  engaged while the menu is showing. */
-  active?: boolean;
+type SharedButtonProps = VariantProps<typeof buttonVariants> & {
+  children: ReactNode;
+  className?: string;
+};
+
+export type NeumorphButtonProps = SharedButtonProps &
+  (
+    | (Omit<HTMLMotionProps<"button">, "children"> & {
+        href?: undefined;
+        loading?: boolean;
+      })
+    | (Omit<HTMLMotionProps<"a">, "children"> & {
+        href: string;
+        loading?: never;
+        disabled?: never;
+      })
+  );
+
+function NeumorphButton(props: NeumorphButtonProps) {
+  const {
+    className,
+    intent,
+    size,
+    fullWidth,
+    children,
+    loading = false,
+    ...rest
+  } = props;
+  const classes = cn(buttonVariants({ intent, size, fullWidth }), className);
+  const motionProps = {
+    className: classes,
+    whileTap: { scale: 0.99 },
+    whileHover: { scale: 1.01 },
+    transition: { type: "spring" as const, stiffness: 400, damping: 10 },
+  };
+  const content = (
+    <>
+      {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+      <motion.span
+        className="inline-flex items-center justify-center gap-1.5"
+        initial={{ opacity: 1 }}
+        animate={{ opacity: loading ? 0.7 : 1 }}
+        transition={{ duration: 0.2 }}
+      >
+        {children}
+      </motion.span>
+    </>
+  );
+
+  if ("href" in rest && rest.href) {
+    return (
+      <motion.a {...motionProps} {...rest}>
+        {content}
+      </motion.a>
+    );
+  }
+
+  const { disabled, ...buttonProps } = rest as Omit<
+    HTMLMotionProps<"button">,
+    "children"
+  > & { disabled?: boolean };
+
+  return (
+    <motion.button
+      disabled={disabled || loading}
+      {...motionProps}
+      {...buttonProps}
+    >
+      {content}
+    </motion.button>
+  );
 }
 
-const bgVariants: Record<string, string> = {
-  primary:
-    "bg-foreground [@media(hover:hover)_and_(pointer:fine)]:group-hover:bg-foreground/90 group-active:bg-foreground/80",
-  secondary:
-    "bg-accent [@media(hover:hover)_and_(pointer:fine)]:group-hover:bg-accent/80 group-active:bg-accent",
-  tertiary:
-    "bg-transparent [@media(hover:hover)_and_(pointer:fine)]:group-hover:bg-hover group-active:bg-active",
-  ghost:
-    "bg-transparent [@media(hover:hover)_and_(pointer:fine)]:group-hover:bg-hover group-active:bg-active",
-};
+export type ButtonProps = NeumorphButtonProps;
+const Button = NeumorphButton;
 
-const activeBgVariants: Record<string, string> = {
-  primary: "bg-foreground/80",
-  secondary: "bg-accent",
-  tertiary: "bg-active",
-  ghost: "bg-active",
-};
-
-const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-  (
-    {
-      className,
-      variant,
-      size,
-      asChild = false,
-      loading = false,
-      leadingIcon: LeadingIcon,
-      trailingIcon: TrailingIcon,
-      active = false,
-      disabled,
-      children,
-      style,
-      ...props
-    },
-    ref,
-  ) => {
-    const Comp = asChild ? Slot : "button";
-    const isIconOnly =
-      size === "icon" || size === "icon-sm" || size === "icon-lg";
-    const iconSize = size === "sm" ? 14 : size === "lg" ? 20 : 16;
-    const shape = useShape();
-    const bgClass = active
-      ? activeBgVariants[variant ?? "primary"]
-      : bgVariants[variant ?? "primary"];
-
-    const isDisabled = Boolean(disabled || loading);
-
-    return (
-      <Comp
-        ref={ref}
-        className={cn(
-          buttonVariants({
-            variant,
-            size,
-            iconLeft: !isIconOnly && !!LeadingIcon,
-            iconRight: !isIconOnly && !!TrailingIcon,
-          }),
-          shape.button,
-          className,
-        )}
-        disabled={isDisabled ? true : undefined}
-        style={style}
-        {...props}
-      >
-        <span
-          aria-hidden
-          className={cn(
-            "absolute inset-0 rounded-[inherit] transition-[background-color,transform] duration-80 group-active:scale-[0.96]",
-            bgClass,
-          )}
-        />
-        <span className="relative inline-flex items-center justify-center gap-[inherit]">
-          {loading ? (
-            <>
-              <span className="flex items-center justify-center gap-[inherit] opacity-0">
-                {LeadingIcon && !isIconOnly && (
-                  <LeadingIcon size={iconSize} strokeWidth={2} />
-                )}
-                {children}
-                {TrailingIcon && !isIconOnly && (
-                  <TrailingIcon size={iconSize} strokeWidth={2} />
-                )}
-              </span>
-              <span className="absolute inset-0 flex items-center justify-center">
-                <svg
-                  className="h-8 w-8"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  aria-hidden
-                >
-                  <title>Loading</title>
-                  <path
-                    d="M 12 12 C 14 8.5 19 8.5 19 12 C 19 15.5 14 15.5 12 12 C 10 8.5 5 8.5 5 12 C 5 15.5 10 15.5 12 12 Z"
-                    stroke="currentColor"
-                    strokeWidth="1.125"
-                    strokeLinecap="round"
-                    pathLength="100"
-                    style={{
-                      strokeDasharray: "15 85",
-                      animation:
-                        "spinner-move 2s linear infinite, spinner-dash 4s ease-in-out infinite",
-                    }}
-                  />
-                </svg>
-              </span>
-            </>
-          ) : isIconOnly ? (
-            <span className="[&_svg]:stroke-[1.5] [&_svg]:transition-[stroke-width] [&_svg]:duration-80 [@media(hover:hover)_and_(pointer:fine)]:group-hover:[&_svg]:stroke-[2]">
-              {children}
-            </span>
-          ) : (
-            <>
-              {LeadingIcon && (
-                <LeadingIcon
-                  size={iconSize}
-                  strokeWidth={1.5}
-                  className="transition-[stroke-width] duration-80 [@media(hover:hover)_and_(pointer:fine)]:group-hover:stroke-[2]"
-                />
-              )}
-              <span>{children}</span>
-              {TrailingIcon && (
-                <TrailingIcon
-                  size={iconSize}
-                  strokeWidth={1.5}
-                  className="transition-[stroke-width] duration-80 [@media(hover:hover)_and_(pointer:fine)]:group-hover:stroke-[2]"
-                />
-              )}
-            </>
-          )}
-        </span>
-      </Comp>
-    );
-  },
-);
-
-Button.displayName = "Button";
-
-export type { ButtonProps };
-export { Button, buttonVariants };
+export { Button, buttonVariants, NeumorphButton };

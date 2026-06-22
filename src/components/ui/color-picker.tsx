@@ -754,18 +754,18 @@ function FormatItem({
       <span className="inline-grid">
         <span
           className="col-start-1 row-start-1 invisible"
-          style={{ fontVariationSettings: fontWeights.semibold }}
+          style={{ fontWeight: fontWeights.semibold }}
           aria-hidden="true"
         >
           {label}
         </span>
         <span
           className={cn(
-            "col-start-1 row-start-1 transition-[color,font-variation-settings] duration-80",
+            "col-start-1 row-start-1 transition-[color,font-weight] duration-80",
             isActive || checked ? "text-foreground" : "text-muted-foreground"
           )}
           style={{
-            fontVariationSettings: checked
+            fontWeight: checked
               ? fontWeights.semibold
               : fontWeights.normal,
           }}
@@ -871,7 +871,7 @@ function FormatDropdown({
           open ? "bg-active text-foreground" : "text-muted-foreground active:bg-active",
           shape.input
         )}
-        style={{ fontVariationSettings: fontWeights.medium }}
+        style={{ fontWeight: fontWeights.medium }}
       >
         <span>{FORMAT_LABELS[value]}</span>
         <ChevronDownIcon
@@ -1135,7 +1135,7 @@ const ColorInput = forwardRef<HTMLInputElement, ColorInputProps>(
             scrubbable && !editing && "pointer-events-none",
             inputClassName
           )}
-          style={{ fontVariationSettings: fontWeights.medium }}
+          style={{ fontWeight: fontWeights.medium }}
         />
       </div>
     );
@@ -1825,7 +1825,7 @@ const ColorPickerPopover = forwardRef<HTMLDivElement, ColorPickerPopoverProps>(
             shape.input,
             triggerClassName
           )}
-          style={{ fontVariationSettings: fontWeights.medium }}
+          style={{ fontWeight: fontWeights.medium }}
         >
           {triggerLabel && triggerLabelPosition === "left" && (
             <span className="text-[13px] text-muted-foreground px-1 select-none">

@@ -1,15 +1,37 @@
-import { Caveat } from "next/font/google";
 import localFont from "next/font/local";
 
-export const boris = localFont({
-  src: "../../public/fonts/Boris.woff2",
-  variable: "--font-boris",
+export const openRunde = localFont({
+  src: [
+    {
+      path: "../../public/fonts/OpenRunde-Regular.woff2",
+      weight: "400",
+      style: "normal",
+    },
+    {
+      path: "../../public/fonts/OpenRunde-Medium.woff2",
+      weight: "500",
+      style: "normal",
+    },
+    {
+      path: "../../public/fonts/OpenRunde-Semibold.woff2",
+      weight: "600",
+      style: "normal",
+    },
+    {
+      path: "../../public/fonts/OpenRunde-Bold.woff2",
+      weight: "700",
+      style: "normal",
+    },
+  ],
+  variable: "--font-sans",
   display: "swap",
 });
 
-export const caveat = Caveat({
-  subsets: ["latin"],
-  weight: "700",
-  variable: "--font-caveat",
+/** Canvas/SVG export — must match the family name inside the font files. */
+export const OPEN_RUNDE_FAMILY = "Open Runde";
+
+export const kookyCloud = localFont({
+  src: "../../public/fonts/Hello-KookyCloud.otf",
+  variable: "--font-kooky",
   display: "swap",
 });

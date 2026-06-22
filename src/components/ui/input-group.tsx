@@ -203,14 +203,14 @@ const InputField = forwardRef<HTMLLabelElement, InputFieldProps>(
         >
           <span
             className="col-start-1 row-start-1 invisible"
-            style={{ fontVariationSettings: fontWeights.semibold }}
+            style={{ fontWeight: fontWeights.semibold }}
             aria-hidden="true"
           >
             {label}
           </span>
           <span
             className={cn(
-              "col-start-1 row-start-1 transition-[color,font-variation-settings] duration-80",
+              "col-start-1 row-start-1 transition-[color,font-weight] duration-80",
               error
                 ? "text-destructive"
                 : labelActive
@@ -218,7 +218,7 @@ const InputField = forwardRef<HTMLLabelElement, InputFieldProps>(
                   : "text-muted-foreground",
             )}
             style={{
-              fontVariationSettings: labelActive
+              fontWeight: labelActive
                 ? fontWeights.semibold
                 : fontWeights.normal,
             }}
@@ -259,7 +259,7 @@ const InputField = forwardRef<HTMLLabelElement, InputFieldProps>(
             aria-describedby={errorId}
             className="min-w-0 flex-1 bg-transparent text-foreground placeholder:text-muted-foreground outline-none font-[inherit]"
             style={{
-              fontVariationSettings: fontWeights.normal,
+              fontWeight: fontWeights.normal,
               fontSize: compact ? "12px" : "13px",
             }}
             {...props}
@@ -277,7 +277,7 @@ const InputField = forwardRef<HTMLLabelElement, InputFieldProps>(
               "text-destructive",
               compact ? "pl-2 text-[11px]" : "pl-3 text-[12px]",
             )}
-            style={{ fontVariationSettings: fontWeights.medium }}
+            style={{ fontWeight: fontWeights.medium }}
           >
             {error}
           </span>

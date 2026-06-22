@@ -366,20 +366,20 @@ const RadioItem = forwardRef<HTMLDivElement, RadioItemProps>(
         <span className="inline-grid text-[13px]">
           <span
             className="col-start-1 row-start-1 invisible"
-            style={{ fontVariationSettings: fontWeights.semibold }}
+            style={{ fontWeight: fontWeights.semibold }}
             aria-hidden="true"
           >
             {label}
           </span>
           <span
             className={cn(
-              "col-start-1 row-start-1 transition-[color,font-variation-settings] duration-80",
+              "col-start-1 row-start-1 transition-[color,font-weight] duration-80",
               isSelected || isActive
                 ? "text-foreground"
                 : "text-muted-foreground"
             )}
             style={{
-              fontVariationSettings: isSelected
+              fontWeight: isSelected
                 ? fontWeights.semibold
                 : fontWeights.normal,
             }}

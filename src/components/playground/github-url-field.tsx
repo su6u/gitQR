@@ -80,7 +80,7 @@ export function GithubUrlField({
       <InputField
         index={0}
         label="GitHub URL"
-        placeholder="https://github.com/username"
+        placeholder="username or github.com/username"
         icon={Link2}
         value={value}
         onChange={handleChange}
@@ -96,21 +96,20 @@ export function GithubUrlField({
         inputMode="url"
         autoComplete="url"
         spellCheck={false}
-        aria-label="GitHub profile or repository URL"
+        aria-label="GitHub profile URL"
         trailing={
-          <span className="playground-enter-pill inline-flex shrink-0 rounded-[16px]">
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="h-7 shrink-0 px-3 text-[12px] text-foreground hover:text-foreground focus-visible:ring-[#FA70B3]/40"
-              style={{ fontVariationSettings: fontWeights.medium }}
-              disabled={!canSubmit}
-              onClick={handleSubmit}
-            >
-              {loading ? "…" : "enter"}
-            </Button>
-          </span>
+          <Button
+            type="button"
+            intent="primary"
+            size="small"
+            className="shrink-0 normal-case"
+            style={{ fontWeight: fontWeights.medium }}
+            disabled={!canSubmit}
+            loading={loading}
+            onClick={handleSubmit}
+          >
+            enter
+          </Button>
         }
       />
     </InputGroup>

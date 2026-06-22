@@ -8,7 +8,7 @@ export function MobileGate() {
         <p className="text-pretty text-base leading-relaxed text-muted-foreground">
           Use desktop to play on this ground{" "}
           <span
-            className="font-[family-name:var(--font-caveat)] text-[1.35em] text-foreground"
+            className="text-[1.35em] font-bold text-foreground"
             aria-hidden
           >
             &gt;.&lt;

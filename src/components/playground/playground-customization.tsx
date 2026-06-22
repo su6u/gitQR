@@ -20,7 +20,6 @@ import {
   type ContributionPalettePreset,
 } from "@/lib/contribution-palettes";
 import { fontWeights } from "@/lib/font-weight";
-import type { IconComponent } from "@/lib/icons";
 import {
   PLAYGROUND_ROUNDNESS_MAX,
   PLAYGROUND_ROUNDNESS_MIN,
@@ -50,11 +49,6 @@ const SLIDER_TRACK_STYLE = {
 } as const;
 const SLIDER_THUMB_COLOR = "#000";
 const SLIDER_THUMB_BORDER = "rgba(0, 0, 0, 0.08)";
-
-/** h-10 pill — 22px reads balanced vs md's default 16px icon. */
-const PlaygroundDownloadIcon = (({ className }: { className?: string }) => (
-  <DownloadIcon size={22} className={className} />
-)) as IconComponent;
 
 function PlaygroundSection({
   title,
@@ -209,7 +203,7 @@ export function PlaygroundCustomization() {
   }, [grid, exportSize, exportFormat, style]);
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-5 pb-2">
       <PlaygroundSection title="Style">
         <div className="flex flex-col gap-2 pl-3">
           <span className="text-[12px] text-muted-foreground">Color</span>
@@ -328,22 +322,24 @@ export function PlaygroundCustomization() {
           </p>
         )}
 
-        <span className="playground-download-pill mt-5">
+        <div className="mt-5 mb-1 px-1">
           <Button
             type="button"
-            variant="ghost"
-            size="md"
-            className="h-10 w-full rounded-full font-bold text-foreground hover:text-foreground focus-visible:ring-[#FA70B3]/40"
-            style={{ fontVariationSettings: fontWeights.bold }}
-            leadingIcon={PlaygroundDownloadIcon}
-            disabled={downloading || !grid}
+            intent="primary"
+            size="medium"
+            fullWidth
+            className="font-bold"
+            style={{ fontWeight: fontWeights.bold }}
+            loading={downloading}
+            disabled={!grid}
             onClick={() => {
               void handleDownload();
             }}
           >
-            {downloading ? "Downloading…" : "Download"}
+            <DownloadIcon size={16} />
+            Download
           </Button>
-        </span>
+        </div>
       </PlaygroundSection>
     </div>
   );

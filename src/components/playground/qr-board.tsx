@@ -20,7 +20,6 @@ import {
   usernameLabelCutout,
   type UsernameLabelCutout,
 } from "@/lib/qr-username-label";
-import { caveat } from "@/lib/fonts";
 import { isPlaygroundEnterReload } from "@/lib/playground-enter-seen";
 import {
   buildRevealSchedule,
@@ -1018,7 +1017,6 @@ export function QrBoard({
               key={`${char}-${index}`}
               className={cn(
                 "qr-username-char inline-block",
-                caveat.className,
                 "font-bold leading-none",
                 usernameRevealActive && "qr-username-char--reveal",
                 usernameTextLit && "qr-username-char--lit",

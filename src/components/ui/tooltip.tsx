@@ -147,7 +147,7 @@ function Tooltip({
                   shape.bg,
                   className
                 )}
-                style={{ fontVariationSettings: fontWeights.medium }}
+                style={{ fontWeight: fontWeights.medium }}
                 initial={{
                   opacity: 0,
                   transform: getSlideTransform(side, slidePx),

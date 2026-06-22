@@ -6,6 +6,7 @@ import { GithubIcon } from "@/components/icons/github-icon";
 import { QuestionMarkIcon } from "@/components/icons/question-mark-icon";
 import { ScanIcon } from "@/components/icons/scan-icon";
 import { XIcon } from "@/components/icons/x-icon";
+import { Button } from "@/components/ui/button";
 import { fontWeights } from "@/lib/font-weight";
 import { cn } from "@/lib/utils";
 import { usePlayground } from "./playground-provider";
@@ -13,14 +14,9 @@ import { usePlayground } from "./playground-provider";
 const GITHUB_REPO_URL = "https://github.com/su6u/GitQR";
 const README_HOW_IT_WORKS_URL = `${GITHUB_REPO_URL}#how-it-works`;
 
-const navLinkClass =
-  "relative z-10 inline-flex h-9 w-full min-h-9 items-center gap-1.5 rounded-[20px] px-4 text-[13px] text-foreground outline-none bg-transparent [@media(hover:hover)_and_(pointer:fine)]:hover:text-foreground [&_svg]:stroke-current";
-
 const navLinkStyle = {
-  fontVariationSettings: fontWeights.semibold,
+  fontWeight: fontWeights.semibold,
 } satisfies CSSProperties;
-
-const navPillShellClass = "playground-nav-pill inline-flex rounded-[20px]";
 
 const EASE_OUT = [0.23, 1, 0.32, 1] as const;
 
@@ -152,46 +148,43 @@ export function PlaygroundNavbar({
       style={style}
       aria-label="Site links"
     >
-      <span className={navPillShellClass}>
-        <a
-          href={GITHUB_REPO_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          className={navLinkClass}
-          style={navLinkStyle}
-        >
-          <GithubIcon size={16} />
-          Give a star
-        </a>
-      </span>
-      <span className={navPillShellClass}>
-        <a
-          href={README_HOW_IT_WORKS_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          className={navLinkClass}
-          style={navLinkStyle}
-        >
-          <QuestionMarkIcon size={16} />
-          How it works
-        </a>
-      </span>
-      <span
-        className={navPillShellClass}
-        data-scan-active={scanMode ? "true" : undefined}
+      <Button
+        href={GITHUB_REPO_URL}
+        target="_blank"
+        rel="noopener noreferrer"
+        intent="primary"
+        size="small"
+        className="normal-case"
+        style={navLinkStyle}
       >
-        <button
-          type="button"
-          className={navLinkClass}
-          style={navLinkStyle}
-          aria-pressed={scanMode}
-          aria-label={scanMode ? "Exit scan mode" : "Enter scan mode"}
-          onClick={toggleScanMode}
-        >
-          <ScanModeIcon scanMode={scanMode} />
-          <ScanModeLabel scanMode={scanMode} />
-        </button>
-      </span>
+        <GithubIcon size={16} />
+        Give a star
+      </Button>
+      <Button
+        href={README_HOW_IT_WORKS_URL}
+        target="_blank"
+        rel="noopener noreferrer"
+        intent="primary"
+        size="small"
+        className="normal-case"
+        style={navLinkStyle}
+      >
+        <QuestionMarkIcon size={16} />
+        How it works
+      </Button>
+      <Button
+        type="button"
+        intent="primary"
+        size="small"
+        className="normal-case"
+        style={navLinkStyle}
+        aria-pressed={scanMode}
+        aria-label={scanMode ? "Exit scan mode" : "Enter scan mode"}
+        onClick={toggleScanMode}
+      >
+        <ScanModeIcon scanMode={scanMode} />
+        <ScanModeLabel scanMode={scanMode} />
+      </Button>
     </nav>
   );
 }

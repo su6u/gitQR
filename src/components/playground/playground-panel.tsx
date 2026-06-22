@@ -1,6 +1,6 @@
 "use client";
 
-import { caveat } from "@/lib/fonts";
+import { kookyCloud } from "@/lib/fonts";
 import { cn } from "@/lib/utils";
 import { GithubUrlField } from "./github-url-field";
 import { PlaygroundCustomization } from "./playground-customization";
@@ -17,8 +17,8 @@ export function PlaygroundPanel() {
       >
         <h2
           className={cn(
-            caveat.className,
-            "translate-y-1 text-[24px] font-bold text-foreground text-balance md:translate-y-2 md:text-[28px]",
+            kookyCloud.className,
+            "translate-y-1 text-[28px] text-[#20190E] text-balance md:translate-y-2 md:text-[32px]",
           )}
         >
           GitQR PlayGround

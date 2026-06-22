@@ -1,7 +1,9 @@
 import { QR_BOARD_GAP_PX } from "@/lib/qr-layout";
 import { QR_MODULE_COUNT } from "@/lib/qr";
 
-export const QR_USERNAME_FONT_FAMILY = "Caveat, cursive";
+import { OPEN_RUNDE_FAMILY } from "@/lib/fonts";
+
+export const QR_USERNAME_FONT_FAMILY = `${OPEN_RUNDE_FAMILY}, sans-serif`;
 export const QR_USERNAME_FONT_WEIGHT = 700;
 export const QR_USERNAME_CUTOUT_FILL = "#ffffff";
 
