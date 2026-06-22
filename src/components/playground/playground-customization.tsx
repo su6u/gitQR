@@ -336,7 +336,7 @@ export function PlaygroundCustomization() {
               void handleDownload();
             }}
           >
-            <DownloadIcon size={16} />
+            <DownloadIcon size={18} className="size-[18px]" />
             Download
           </Button>
         </div>

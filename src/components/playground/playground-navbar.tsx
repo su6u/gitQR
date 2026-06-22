@@ -144,7 +144,7 @@ export function PlaygroundNavbar({
 
   return (
     <nav
-      className={cn("flex flex-wrap items-center gap-1.5 md:gap-2", className)}
+      className={cn("flex flex-wrap items-center gap-2 md:gap-2.5", className)}
       style={style}
       aria-label="Site links"
     >
@@ -157,7 +157,7 @@ export function PlaygroundNavbar({
         className="normal-case"
         style={navLinkStyle}
       >
-        <GithubIcon size={16} />
+        <GithubIcon size={16} className="size-4" />
         Give a star
       </Button>
       <Button
@@ -169,7 +169,7 @@ export function PlaygroundNavbar({
         className="normal-case"
         style={navLinkStyle}
       >
-        <QuestionMarkIcon size={16} />
+        <QuestionMarkIcon size={16} className="size-4" />
         How it works
       </Button>
       <Button
