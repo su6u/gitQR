@@ -7,8 +7,19 @@ import {
   GITHUB_CONTRIBUTION_COLORS,
   levelFromEnum,
 } from "@/lib/contributions";
+import { githubUsernameFromUrl as parseGithubUsernameFromUrl } from "@/lib/github-url";
 
 const GRAPHQL_ENDPOINT = "https://api.github.com/graphql";
+export const MIN_GITHUB_CONTRIBUTIONS = 1;
+
+export class MinimumContributionsError extends Error {
+  constructor(minimum: number) {
+    super(
+      `GitHub profile needs at least ${minimum} public contribution in the last year`,
+    );
+    this.name = "MinimumContributionsError";
+  }
+}
 
 const CONTRIBUTIONS_QUERY = `
   query ($username: String!) {
@@ -206,12 +217,38 @@ export async function fetchContributions(
 }
 
 export function githubUsernameFromUrl(url: string): string {
-  const segments = new URL(url).pathname.split("/").filter(Boolean);
-  const username = segments[0];
-  if (!username) {
-    throw new Error("Missing GitHub username in URL");
+  return parseGithubUsernameFromUrl(url);
+}
+
+export function contributionSummary(grid: ContributionGrid): {
+  total: number;
+  activeDays: number;
+} {
+  let total = 0;
+  let activeDays = 0;
+
+  for (const week of grid) {
+    for (const day of week) {
+      total += day.count;
+      if (day.count > 0 || day.level > 0) {
+        activeDays += 1;
+      }
+    }
   }
-  return username;
+
+  return { total, activeDays };
+}
+
+export function assertMinimumContributions(
+  grid: ContributionGrid,
+  minimum = MIN_GITHUB_CONTRIBUTIONS,
+): void {
+  const { total, activeDays } = contributionSummary(grid);
+  if (total >= minimum || activeDays >= minimum) {
+    return;
+  }
+
+  throw new MinimumContributionsError(minimum);
 }
 
 export function isValidContributionGrid(grid: ContributionGrid): boolean {
