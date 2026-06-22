@@ -666,24 +666,32 @@
     transform: translate(var(--qr-x, 0px), var(--qr-y, 0px));
   }
 
-  .qr-grid[data-palette-recolor] .qr-cell--palette-recolor {
-    background-color: var(--qr-start-fill) !important;
-    transition: background-color var(--qr-reveal-dur) var(--qr-ease-enter)
-      var(--qr-reveal-delay, 0ms);
+  @keyframes qr-palette-recolor-fill {
+    from {
+      background-color: var(--qr-start-fill);
+    }
+    to {
+      background-color: var(--qr-target-fill);
+    }
   }
 
-  .qr-grid[data-palette-recolor] .qr-cell--palette-recolor.qr-cell--palette-lit {
-    background-color: var(--qr-target-fill) !important;
+  @keyframes qr-reveal-fill {
+    from {
+      background-color: var(--qr-reveal-start);
+    }
+    to {
+      background-color: var(--qr-target-fill);
+    }
+  }
+
+  .qr-grid[data-palette-recolor] .qr-cell--palette-recolor {
+    animation: qr-palette-recolor-fill var(--qr-reveal-dur) var(--qr-ease-enter)
+      var(--qr-reveal-delay, 0ms) both;
   }
 
   .qr-grid[data-reveal] .qr-cell--reveal {
-    background-color: var(--qr-reveal-start) !important;
-    transition: background-color var(--qr-reveal-dur) var(--qr-ease-enter)
-      var(--qr-reveal-delay, 0ms);
-  }
-
-  .qr-grid[data-reveal] .qr-cell--reveal.qr-cell--lit {
-    background-color: var(--qr-target-fill) !important;
+    animation: qr-reveal-fill var(--qr-reveal-dur) var(--qr-ease-enter)
+      var(--qr-reveal-delay, 0ms) both;
   }
 
   @media (hover: hover) and (pointer: fine) {

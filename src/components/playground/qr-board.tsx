@@ -438,18 +438,34 @@ export function QrBoard({
       }
     }
 
-    // Palette swap: stagger old → new color on QR modules only (not doodles).
+    // Palette swap / regenerate: stagger old → new QR cells in place.
     if (
-      paletteRecolor &&
       prevGrid &&
       gridChanged &&
-      styledGrid.displayGeneration > lastPaletteAnimatedGenRef.current
+      styledGrid &&
+      (paletteRecolor
+        ? styledGrid.displayGeneration > lastPaletteAnimatedGenRef.current
+        : isRegenerate)
     ) {
-      const indices = collectQrDarkRevealIndices(
-        styledGrid,
-        layout.rows,
-        layout.cols,
-      );
+      const indices = paletteRecolor
+        ? collectQrDarkRevealIndices(styledGrid, layout.rows, layout.cols)
+        : Array.from({ length: layout.rows * layout.cols }, (_, i) => i).filter(
+            (i) => {
+              const row = Math.floor(i / layout.cols);
+              const col = i % layout.cols;
+              const qrIndex = qrModuleIndex(row, col, layout.rows, layout.cols);
+              if (qrIndex === null) return false;
+
+              const mod = styledGrid.modules[qrIndex];
+              return (
+                mod !== undefined &&
+                !(
+                  isFinderModule(mod.row, mod.col, styledGrid.size) &&
+                  !isFinderModuleInCircle(mod.row, mod.col, styledGrid.size)
+                )
+              );
+            },
+          );
       const changedIndices: number[] = [];
       const startFills = new Map<number, string>();
 
@@ -473,7 +489,9 @@ export function QrBoard({
       }
 
       if (changedIndices.length > 0) {
-        lastPaletteAnimatedGenRef.current = styledGrid.displayGeneration;
+        if (paletteRecolor) {
+          lastPaletteAnimatedGenRef.current = styledGrid.displayGeneration;
+        }
         paletteStartFillsRef.current = startFills;
         setPaletteRecolorDelays(buildRevealSchedule(changedIndices));
         setPaletteRecolorLit(false);
@@ -500,7 +518,9 @@ export function QrBoard({
       }
 
       settledGridRef.current = styledGrid;
-      lastPaletteAnimatedGenRef.current = styledGrid.displayGeneration;
+      if (paletteRecolor) {
+        lastPaletteAnimatedGenRef.current = styledGrid.displayGeneration;
+      }
       return;
     }
 
@@ -913,7 +933,6 @@ export function QrBoard({
             const shouldPaletteRecolor =
               paletteRecolorActive &&
               paletteRecolorDelays.has(i) &&
-              Boolean(mod?.isDark) &&
               !isFinderOutsideCircle &&
               !shouldUsernameReveal &&
               !showUsernameCutoutWhite &&
