@@ -83,6 +83,21 @@ GitQR tries all eight QR mask patterns and picks whichever keeps dark modules da
 
 Zero-contribution days that land on dark modules get forced to mid-gray instead of your palette's lightest swatch, so scanners can still separate them from the white background. Swapping palette doesn't re-encode.
 
+### Scan QR
+
+The nav **Scan QR** button decodes the live board in the browser, the same way an export would be read, but without leaving the page.
+
+Flip scan mode and the playground dims the board, frames the QR region, and preloads the decoder WASM. Click the code and GitQR rasterizes the current styled grid to a canvas bitmap, runs decode on that `ImageData`, and opens the recovered URL in a new tab if it matches what you encoded.
+
+Decode is two passes on that bitmap:
+
+1. **Fast pass** — square black/white modules only, contribution colors stripped. Most styled QRs decode here.
+2. **Styled fallback** — full colors, gaps, and roundness at higher resolution, with rotation, inversion, and downscale enabled if the fast pass misses.
+
+Engines run client-side in order: `@qrstuff/qured`, then `zxing-wasm` as backup.
+
+Any failure tells you on the board before you export or share.
+
 <br />
 
 ## What you can do
