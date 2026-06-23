@@ -4,7 +4,7 @@
 
 <br /><br />
 
-<a href="https://gitqr.anshu.sh">play in the ground</a>
+→ <a href="https://gitqr.fun">play in the ground</a>
 &nbsp;·&nbsp;
 <a href="public/images/cookie.png">star for a cookie</a>
 &nbsp;·&nbsp;
@@ -16,7 +16,7 @@
 
 ## What
 
-What if my contribution graph was a QR code? Same green squares, same commit rhythm — scan it and it opens the profile. I couldn't stop thinking about it.
+What if my contribution graph was a QR code? Same green squares, same commit rhythm scan it and it opens the profile. I couldn't stop thinking about it.
 
 made this as a fun weekend project. It pulls a public GitHub heatmap and maps it onto a QR and also actually scans (hopefully).
 
