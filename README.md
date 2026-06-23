@@ -4,9 +4,9 @@
 
 <br /><br />
 
-<a href="https://gitqr.anshu.sh">play in the playground</a>
+<a href="https://gitqr.anshu.sh">play in the ground</a>
 &nbsp;·&nbsp;
-<a href="public/images/cookie.png">star this for a cookie</a>
+<a href="public/images/cookie.png">star for a cookie</a>
 &nbsp;·&nbsp;
 <a href="LICENSE">license</a>
 
@@ -16,11 +16,9 @@
 
 ## What
 
-You know the GitHub profile heatmap. Fifty-something columns of tiny squares, each one a day you touched a repo.
+What if my contribution graph was a QR code? Same green squares, same commit rhythm — scan it and it opens the profile. I couldn't stop thinking about it.
 
-GitQR takes a profile URL, pulls that same grid, and turns it into a QR code that still looks like yours. Not a generic black-and-white block. Your commits, your colors, your shape.
-
-And it actually scans.
+made this as a fun weekend project. It pulls a public GitHub heatmap and maps it onto a QR and also actually scans (hopefully).
 
 <br />
 
@@ -91,7 +89,7 @@ Flip scan mode and the playground dims the board, frames the QR region, and prel
 
 Decode is two passes on that bitmap:
 
-1. **Fast pass** — square black/white modules only, contribution colors stripped. Most styled QRs decode here.
+1. **Fast pass** - square black/white modules only, contribution colors stripped. Most styled QRs decode here.
 2. **Styled fallback** — full colors, gaps, and roundness at higher resolution, with rotation, inversion, and downscale enabled if the fast pass misses.
 
 Engines run client-side in order: `@qrstuff/qured`, then `zxing-wasm` as backup.
@@ -160,6 +158,6 @@ cat design inspired by <a href="https://icons8.com/">Icons8</a> illustrations
 
 <img src="public/images/logo.png" width="40" alt="" />
 
-<em>a qr code can lose about 30% of its pixels and still scan backup data is woven through the whole pattern on purpose. that's also why slapping a logo in the middle actually works</em>
+<em>fun fact: qr code data doesn't read like a book. the bits start near the bottom-right corner and snake upward in two-column strips, dodging the big locator squares like tiny traffic</em>
 
 </div>
